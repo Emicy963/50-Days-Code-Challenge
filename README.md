@@ -92,7 +92,7 @@ pip install -r requirements.txt
 
 ✅ 50 exercícios mapeados
 📌 Em andamento: resolvendo e documentando um por um
-📋 Lista de exercícios completa no arquivo [`DESAFIOS.md`](./DESAFIOS.md)
+📋 Lista de exercícios completa no arquivo [`DESAFIOS.md`](docs/DESAFIOS.md)
 
 ## 🤝 Contribuições
 
