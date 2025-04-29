@@ -1,5 +1,5 @@
 def cont_words(word: str)->dict:
-    words = dict
+    words = dict()
     for i in word:
         count_word = 0
         if i in words.keys:
