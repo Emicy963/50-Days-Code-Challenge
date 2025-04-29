@@ -72,6 +72,7 @@ pip install -r requirements.txt
 
 4. Vá resolvendo os desafios na ordem sugerida dentro das pastas:
 
+```bash
 📁 python/
   ├── desafio_01.py
   ├── desafio_02.py
@@ -80,12 +81,17 @@ pip install -r requirements.txt
   ├── desafio_26/
   ├── desafio_27/
   └── ...
+```
 
+---
 ## 🧠 Para Quem É Este Repositório?
 
 ✅ Estudantes e autodidatas que querem praticar para entrevistas
+
 ✅ Devs iniciantes a intermediários com foco em backend
+
 ✅ Quem está fazendo transição de carreira para a área de tecnologia
+
 ✅ Entusiastas de Python e Django que querem se desafiar
 
 ## 📈 Progresso
