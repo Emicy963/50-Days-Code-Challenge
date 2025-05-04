@@ -1,24 +1,34 @@
-from ex4 import cont_words
+from functools import reduce
 
-def fatoracao_number(num:int)->int:
-    count = 0
-    while count!=num:
-        num*=(num-count)
-        count+=1
-    return num
+def fatorial(num:int)->int:
+    result=1
+    while num:
+        result *= num
+        num -= 1
+    return result
 
 def anagrama(word:str)->bool:
-    words = cont_words(word)
-    numerador = fatoracao_number(len(word))
-    denominador = 0
-    denominadores = []
-    for i in words.values:
-        denominadores.append(i)
-    for i in denominadores:
-        if i>1:
-            denominador*=fatoracao_number(i)
+    words = word.split()
+    l = []
+    def counter(w):
+        d = {}
+        for i in w:
+            if i not in d:
+                d[i] = 1
+            else:
+                d[i] += 1
+        return d
+    for j in words:
+        l.append(counter(j))
+    return reduce(lambda x, y: x==y, l)
 
-    if denominador==0:
-        return numerador
-    else:
-        return (numerador/denominador)
+def count_anagramas(word:str)->int:
+    n = fatorial(len(word))
+    h = {}
+    for i in n:
+        if i not in h:
+            h[i] = 1
+        else:
+            h[i] += 1
+    result = n//reduce(mul, [fatorial(j) for j in h.values()])
+    return result
