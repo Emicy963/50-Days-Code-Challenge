@@ -1,5 +1,3 @@
-from functools import reduce
-
 def fatorial(num:int)->int:
     result=1
     while num:
@@ -20,15 +18,17 @@ def anagrama(word:str)->bool:
         return d
     for j in words:
         l.append(counter(j))
-    return reduce(lambda x, y: x==y, l)
+    return all(x==l[0] for x in l)
 
 def count_anagramas(word:str)->int:
     n = fatorial(len(word))
     h = {}
-    for i in n:
+    for i in word:
         if i not in h:
             h[i] = 1
         else:
             h[i] += 1
-    result = n//reduce(mul, [fatorial(j) for j in h.values()])
-    return result
+    
+    for j in h.values():
+        n /= fatorial(j)
+    return round(n)
