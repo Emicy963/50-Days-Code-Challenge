@@ -23,7 +23,7 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 
 ### 🔸 Validação e Algoritmos
 
-11. Verificar se uma senha é segura 🔲
+11. Verificar se uma senha é segura ✅
 12. Recriar bubble sort e merge sort 🔲
 13. Criar um jogo da Forca no terminal 🔲
 14. Interpretar expressões matemáticas simples (ex: "2 + 3 * 4") 🔲
