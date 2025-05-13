@@ -60,8 +60,9 @@ cd desafios-python-django
 
 ```bash
 python -m venv .venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
+python3 -m venv .venv      # Linux/macOS
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
 ```
 
 3. Instale as dependências (para os desafios com Django):
