@@ -36,7 +36,7 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 
 ### 🔸 Orientação a Objetos e Testes
 
-21. Criar classe `ContaBancária` com métodos sacar, depositar, transferir 🔲
+21. Criar classe `ContaBancária` com métodos sacar, depositar, transferir ✅
 22. Sistema de cadastro de produtos com herança (Produto → Livro, Eletrônico) 🔲
 23. Fila de impressão com prioridade (usando heapq) 🔲
 24. Serializador JSON manual (sem `json.dumps`) 🔲
