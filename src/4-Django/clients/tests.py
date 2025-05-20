@@ -45,3 +45,22 @@ class ClientModelTest(TestCase):
         with self.assertRaises(ValidationError):
             underage_client.full_clean()
             underage_client.save()
+    
+    def test_validation_age_method(self):
+        """
+        Testa o método validation_age de forma individual.
+        """
+        client = Client(name='Test', email='test@example.com', age=16)
+
+        with self.assertRaises(ValidationError):
+            client.validation_age()
+        
+        # Alterar para idade válida
+        client.age = 18
+        try:
+            client.validation_age() # Não deve lançar excessões
+            passed = True
+        except ValidationError:
+            passed = False
+        
+        self.assertTrue(passed)
