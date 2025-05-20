@@ -9,10 +9,25 @@ class Client(models.Model):
     def __str__(self):
         return f'Client: {self.name}'
 
-    def verify_age(self):
+    def validation_age(self):
         """
         Verify if client is at leat 18 years old.
         Raises ValidationError if Client is underage.
         """
         if self.age<18:
             raise ValidationError('We do not accept clients under 18 years old.')
+    
+    def clean(self):
+        """
+        Override clean method to perform model validation.
+        This will be called automatically when using model forms and .full_clean()
+        """
+        super().clean()
+        self.validation_age()
+
+    def save(self, *args, **kwargs):
+        """
+        Override save method to ensure age validation before saving
+        """
+        self.validation_age
+        super().save(*args, **kwargs)

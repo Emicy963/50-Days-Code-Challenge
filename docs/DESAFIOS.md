@@ -51,7 +51,7 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 ### 🔸 CRUD e Modelos
 
 26. Criar projeto Django e app `clientes` com modelo Cliente (nome, email, idade) ✅
-27. Adicionar validação customizada no model (ex: idade ≥ 18) 🔲
+27. Adicionar validação customizada no model (ex: idade ≥ 18) ✅
 28. Criar views para listar, criar, editar, deletar (CRUD básico) 🔲
 29. Adicionar paginação na view de listagem 🔲
 30. Personalizar admin com modelo Cliente 🔲
