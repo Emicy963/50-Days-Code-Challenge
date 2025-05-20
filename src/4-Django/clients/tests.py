@@ -1,5 +1,5 @@
 from django.test import TestCase
-
+from django.core.exceptions import ValidationError
 from .models import Client
 
 class ClientModelTest(TestCase):
@@ -30,3 +30,18 @@ class ClientModelTest(TestCase):
         # Verificar se foi salvo corretamente
         self.assertEqual(Client.objects.count(), 2)
         self.assertEqual(Client.objects.get(email='maria@example.com').name, 'Maria Joana')
+    
+    def test_underage_client(self):
+        """
+        Testa a validzção da idade mínima.
+        """
+        underage_client = Client.objects.create(
+            name='Constantino da Silva',
+            email='constantino@example.com',
+            age=16
+        )
+
+        # Verificar se a validação da idade está funcionando
+        with self.assertRaises(ValidationError):
+            underage_client.full_clean()
+            underage_client.save()
