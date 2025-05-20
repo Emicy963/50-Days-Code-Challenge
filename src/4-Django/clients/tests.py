@@ -70,3 +70,22 @@ class ClientModelTest(TestCase):
         Testa o método __str__ do models
         """
         self.assertEqual(str(self.validation_client), 'Client: João Silva')
+
+    def test_clean_method(self):
+        """
+        Testa o método clean por completo
+        """
+        client = Client(name='Test', email='test@example.com', age=16)
+
+        with self.assertEqual(ValidationError):
+            client.clean()
+
+        # Corrigir a idade e testar novamente
+        client.age=18
+        try:
+            client.clean() # Deve funcionar sem erros
+            passed = True
+        except ValidationError:
+            passed = False
+        
+        self.assertTrue(passed)
