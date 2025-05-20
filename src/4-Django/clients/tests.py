@@ -64,3 +64,9 @@ class ClientModelTest(TestCase):
             passed = False
         
         self.assertTrue(passed)
+
+    def test_str_method(self):
+        """
+        Testa o método __str__ do models
+        """
+        self.assertEqual(str(self.validation_client), 'Client: João Silva')
