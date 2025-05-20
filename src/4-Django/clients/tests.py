@@ -77,7 +77,7 @@ class ClientModelTest(TestCase):
         """
         client = Client(name='Test', email='test@example.com', age=16)
 
-        with self.assertEqual(ValidationError):
+        with self.assertRaises(ValidationError):
             client.clean()
 
         # Corrigir a idade e testar novamente
