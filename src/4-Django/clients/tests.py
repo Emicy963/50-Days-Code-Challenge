@@ -89,3 +89,19 @@ class ClientModelTest(TestCase):
             passed = False
         
         self.assertTrue(passed)
+
+    def test_save_method_with_validation(self):
+        """
+        Testa se o método save da model esta a fazer a validação corretamente.
+        """
+        underage_client = Client(
+            name='Lucas Mendes',
+            email='lucas@example.com',
+            age=14
+        )
+
+        with self.assertRaises(ValidationError):
+            underage_client.save() # Deve falhar devido a validação
+
+        # Verificar se o cliente não foi salvo
+        self.assertEqual(Client.objects.filter(email='lucas@example.com').count(), 0)
