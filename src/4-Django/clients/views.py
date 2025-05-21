@@ -3,14 +3,20 @@ from .models import Client
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 
+def get_client(request):
+    """
+    Método para fazer o pegar os clientes cadastrados
+    """
+    if request.method=='GET':
+        clients = Client.objects.all() # Pegar todos os clientes cadastrados
+        return render(request, 'clients.html', {'clients': clients})
+    
 def create_client(request):
     """
     Método para criar usuário apartir do tipo da requisição
     """
     if request.method=='GET':
-        # Se a requisição for do tipo GET, retornar o templates que mostra os clientes cadastrados
-        clients = Client.objects.all()
-        return render(request, 'clients.html', {'clients':clients})
+        return render(request, 'creat_client.html')
     else:
         name=request.POST.get('name')
         email=request.POST.get('email')
@@ -21,7 +27,7 @@ def create_client(request):
             email=email,
             age=age
         )
-
+        # Salvar o cliente e levantar erros
         try:
             client.save()
             messages.success(request, 'Cliente criado com sucesso!')
