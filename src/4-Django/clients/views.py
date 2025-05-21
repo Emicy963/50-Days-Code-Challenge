@@ -62,3 +62,10 @@ def delete_client(request, id):
     client = get_object_or_404(Client, id=id)
     client.delete()
     return redirect('clients.html')
+
+def detail_client(request, id):
+    """
+    Método para pegar um cliente individualmente
+    """
+    client = get_object_or_404(Client, id=id)
+    return render(request, 'detail_client.html', {'client': client})
