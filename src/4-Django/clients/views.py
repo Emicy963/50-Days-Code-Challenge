@@ -36,7 +36,7 @@ def create_client(request):
             messages.error(request, f'Erro de validação: {str(err)}')
             return redirect('create_client.html')
 
-def update_client(request, id:int):
+def update_client(request, id):
     """
     Método para atualizar um usuário
     """
@@ -50,7 +50,15 @@ def update_client(request, id:int):
             # Salvar as atualizações do cliente
             client.save()
             messages.success(request, 'Cliente criado com sucesso!')
-            return redirect('clients.html')
+            return redirect('client_detail.html')
         except ValidationError as err:
             messages.error(request, f'Erro de validação: {str(err)}')
             return redirect('update_clien.html')
+
+def delete_client(request, id):
+    """
+    Método para apagar um cliente
+    """
+    client = get_object_or_404(Client, id=id)
+    client.delete()
+    return redirect('clients.html')
