@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Client
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -35,3 +35,22 @@ def create_client(request):
         except ValidationError as err:
             messages.error(request, f'Erro de validação: {str(err)}')
             return redirect('create_client.html')
+
+def update_client(request, id:int):
+    """
+    Método para atualizar um usuário
+    """
+    client = get_object_or_404(Client, id=id) # Pegar o cliente que se pretende atualizar via ID
+    if request=='POST':
+        # Pegar a informações do template
+        client.name = request.POST.get('name')
+        client.email = request.POST.get('email')
+        client.age = request.POST.get('age')
+        try:
+            # Salvar as atualizações do cliente
+            client.save()
+            messages.success(request, 'Cliente criado com sucesso!')
+            return redirect('clients.html')
+        except ValidationError as err:
+            messages.error(request, f'Erro de validação: {str(err)}')
+            return redirect('update_clien.html')
