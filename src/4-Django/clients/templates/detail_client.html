@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ client.name }} - Detalhes{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <div class="flex justify-between items-start mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Detalhes do Cliente</h2>
+        <div class="flex space-x-2">
+            <a href="{% url 'update_client' client.id %}" 
+               class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Editar
+            </a>
+            <a href="{% url 'delete_client' client.id %}" 
+               class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+               onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
+                Excluir
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <div class="border-b border-gray-200 pb-3">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Informações Pessoais</h3>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    Nome
+                </label>
+                <p class="text-lg text-gray-900 font-medium">{{ client.name }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                </label>
+                <p class="text-lg text-gray-900">
+                    <a href="mailto:{{ client.email }}" class="text-blue-600 hover:text-blue-800">
+                        {{ client.email }}
+                    </a>
+                </p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    Idade
+                </label>
+                <p class="text-lg text-gray-900">{{ client.age }} anos</p>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Ações Rápidas</h3>
+            <div class="space-y-3">
+                <a href="mailto:{{ client.email }}" 
+                   class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded">
+                    Enviar Email
+                </a>
+                <a href="{% url 'update_client' client.id %}" 
+                   class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded">
+                    Editar Informações
+                </a>
+                <button onclick="window.print()" 
+                        class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-4 rounded">
+                    Imprimir Detalhes
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-8 pt-6 border-t border-gray-200">
+        <a href="{% url 'clients' %}" 
+           class="inline-flex items-center text-blue-600 hover:text-blue-800">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Voltar para Lista de Clientes
+        </a>
+    </div>
+</div>
+{% endblock %}
