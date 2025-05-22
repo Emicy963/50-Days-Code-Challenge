@@ -1,0 +1,8 @@
+asgiref==3.8.1
+colorama==0.4.6
+Django==5.2.1
+iniconfig==2.1.0
+packaging==25.0
+pluggy==1.6.0
+sqlparse==0.5.3
+tzdata==2025.2
