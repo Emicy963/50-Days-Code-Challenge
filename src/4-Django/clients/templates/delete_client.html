@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Atualizar Cliente{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Atualizar Cliente</h2>
+        <a href="{% url 'detail_client' client.id %}" 
+           class="text-blue-600 hover:text-blue-800 text-sm">
+            <i class="fas fa-eye mr-1"></i>
+            Ver Perfil
+        </a>
+    </div>
+    
+    <!-- Exibir erros não relacionados a campos específicos -->
+    {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <form method="POST" novalidate>
+        {% csrf_token %}
+        
+        <!-- Campo Nome -->
+        <div class="mb-4">
+            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.name.label }}
+                {% if form.name.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.name }}
+            {% if form.name.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.name.help_text }}</p>
+            {% endif %}
+            {% if form.name.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.name.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Campo Email -->
+        <div class="mb-4">
+            <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.email.label }}
+                {% if form.email.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.email }}
+            {% if form.email.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.email.help_text }}</p>
+            {% endif %}
+            {% if form.email.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.email.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Campo Idade -->
+        <div class="mb-6">
+            <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.age.label }}
+                {% if form.age.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.age }}
+            {% if form.age.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.age.help_text }}</p>
+            {% endif %}
+            {% if form.age.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.age.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Histórico de alterações (se existir) -->
+        {% if client.updated_at != client.created_at %}
+        <div class="mb-4 p-3 bg-yellow-50 rounded-lg">
+            <p class="text-xs text-yellow-700">
+                <i class="fas fa-history mr-1"></i>
+                Última atualização: {{ client.updated_at|date:"d/m/Y H:i" }}
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Botões -->
+        <div class="flex space-x-4">
+            <button type="submit" 
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                <i class="fas fa-save mr-2"></i>
+                Salvar Alterações
+            </button>
+            <a href="{% url 'detail_client' client.id %}" 
+               class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-center transition duration-200">
+                <i class="fas fa-times mr-2"></i>
+                Cancelar
+            </a>
+        </div>
+    </form>
+    
+    <!-- Informações adicionais -->
+    <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+        <div class="p-3 bg-gray-50 rounded">
+            <p class="text-gray-600">Cliente desde:</p>
+            <p class="font-medium">{{ client.created_at|date:"d/m/Y" }}</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded">
+            <p class="text-gray-600">Faixa etária:</p>
+            <p class="font-medium">{{ client.get_age_group }}</p>
+        </div>
+    </div>
+    
+    <!-- Dicas de preenchimento -->
+    <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+        <h3 class="text-sm font-medium text-blue-800 mb-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            Dicas de atualização:
+        </h3>
+        <ul class="text-xs text-blue-700 space-y-1">
+            <li>• Alterações no email devem manter a unicidade</li>
+            <li>• Nome será automaticamente formatado</li>
+            <li>• Idade deve permanecer acima de 18 anos</li>
+        </ul>
+    </div>
+</div>
+
+<!-- JavaScript para melhorar a experiência do usuário -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validação em tempo real do nome
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    if (nameField) {
+        nameField.addEventListener('input', function() {
+            const value = this.value;
+            const regex = /^[a-zA-ZÀ-ÿ\s]*$/;
+            
+            if (value && !regex.test(value)) {
+                this.setCustomValidity('Nome deve conter apenas letras e espaços');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
+    
+    // Validação em tempo real da idade
+    const ageField = document.getElementById('{{ form.age.id_for_label }}');
+    if (ageField) {
+        ageField.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            
+            if (value && value < 18) {
+                this.setCustomValidity('Idade mínima é 18 anos');
+            } else if (value && value > 120) {
+                this.setCustomValidity('Idade deve ser realista');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
+    
+    // Destacar campos alterados
+    const originalData = {
+        name: '{{ client.name|escapejs }}',
+        email: '{{ client.email|escapejs }}',
+        age: '{{ client.age }}'
+    };
+    
+    function checkChanges() {
+        const nameField = document.getElementById('{{ form.name.id_for_label }}');
+        const emailField = document.getElementById('{{ form.email.id_for_label }}');
+        const ageField = document.getElementById('{{ form.age.id_for_label }}');
+        
+        [nameField, emailField, ageField].forEach(field => {
+            if (field) {
+                const fieldName = field.name;
+                const currentValue = field.value;
+                const originalValue = originalData[fieldName];
+                
+                if (currentValue !== originalValue) {
+                    field.classList.add('ring-2', 'ring-yellow-400');
+                } else {
+                    field.classList.remove('ring-2', 'ring-yellow-400');
+                }
+            }
+        });
+    }
+    
+    // Verificar mudanças em tempo real
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', checkChanges);
+    });
+    
+    // Confirmação antes de sair se houver mudanças
+    let hasChanges = false;
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            hasChanges = true;
+        });
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = 'Você tem alterações não salvas. Deseja realmente sair?';
+        }
+    });
+    
+    // Remover confirmação ao submeter
+    document.querySelector('form').addEventListener('submit', function() {
+        hasChanges = false;
+    });
+});
