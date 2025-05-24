@@ -4,61 +4,117 @@
 
 {% block content %}
 <div class="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">Atualizar Cliente</h2>
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Atualizar Cliente</h2>
+        <a href="{% url 'detail_client' client.id %}" 
+           class="text-blue-600 hover:text-blue-800 text-sm">
+            <i class="fas fa-eye mr-1"></i>
+            Ver Perfil
+        </a>
+    </div>
     
-    <form method="POST">
+    <!-- Exibir erros não relacionados a campos específicos -->
+    {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <form method="POST" novalidate>
         {% csrf_token %}
         
+        <!-- Campo Nome -->
         <div class="mb-4">
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                Nome
+            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.name.label }}
+                {% if form.name.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
             </label>
-            <input type="text" 
-                   id="name" 
-                   name="name" 
-                   value="{{ client.name }}"
-                   required 
-                   maxlength="100"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            {{ form.name }}
+            {% if form.name.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.name.help_text }}</p>
+            {% endif %}
+            {% if form.name.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.name.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
         
+        <!-- Campo Email -->
         <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                Email
+            <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.email.label }}
+                {% if form.email.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
             </label>
-            <input type="email" 
-                   id="email" 
-                   name="email" 
-                   value="{{ client.email }}"
-                   required
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            {{ form.email }}
+            {% if form.email.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.email.help_text }}</p>
+            {% endif %}
+            {% if form.email.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.email.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
         
+        <!-- Campo Idade -->
         <div class="mb-6">
-            <label for="age" class="block text-sm font-medium text-gray-700 mb-2">
-                Idade
+            <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.age.label }}
+                {% if form.age.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
             </label>
-            <input type="number" 
-                   id="age" 
-                   name="age" 
-                   value="{{ client.age }}"
-                   required 
-                   min="18" 
-                   max="120"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            <p class="text-sm text-gray-500 mt-1">Idade mínima: 18 anos</p>
+            {{ form.age }}
+            {% if form.age.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.age.help_text }}</p>
+            {% endif %}
+            {% if form.age.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.age.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
         
+        <!-- Histórico de alterações (se existir) -->
+        {% if client.updated_at != client.created_at %}
+        <div class="mb-4 p-3 bg-yellow-50 rounded-lg">
+            <p class="text-xs text-yellow-700">
+                <i class="fas fa-history mr-1"></i>
+                Última atualização: {{ client.updated_at|date:"d/m/Y H:i" }}
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Botões -->
         <div class="flex space-x-4">
             <button type="submit" 
-                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Atualizar Cliente
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                <i class="fas fa-save mr-2"></i>
+                Salvar Alterações
             </button>
             <a href="{% url 'detail_client' client.id %}" 
-               class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-center">
+               class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-center transition duration-200">
+                <i class="fas fa-times mr-2"></i>
                 Cancelar
             </a>
         </div>
     </form>
-</div>
-{% endblock %}
+    
+    <!-- Informações adicionais -->
+    <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+        <div class="p-3 bg-gray-50 rounded">
+            <p class="text-gray-600">Cliente desde:</p>
+            <p class="font-medium">{{ client.
