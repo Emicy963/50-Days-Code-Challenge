@@ -58,7 +58,7 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 
 ### 🔸 Forms, Middleware e Auth
 
-31. Criar formulário com `ModelForm` e validações 🔲
+31. Criar formulário com `ModelForm` e validações ✅
 32. Criar middleware para calcular tempo de requisição 🔲
 33. Configurar arquivos estáticos corretamente 🔲
 34. Implementar sistema de login/logout/registro 🔲
