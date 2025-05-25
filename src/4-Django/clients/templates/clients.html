@@ -4,7 +4,8 @@
 
 {% block content %}
 <div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
+    <!-- Cabeçalho -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Lista de Clientes</h2>
             {% if total_clients %}
@@ -16,16 +17,112 @@
                 </p>
             {% endif %}
         </div>
-        <a href="{% url 'create_client' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Novo Cliente
-        </a>
+        <div class="flex space-x-2">
+            <a href="{% url 'create_client' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                Novo Cliente
+            </a>
+            {% if total_clients > 0 %}
+            <button onclick="toggleBulkActions()" 
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                <i class="fas fa-check-square mr-2"></i>
+                Seleção em Lote
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Formulário de Busca -->
+    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <form method="GET" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    {{ search_form.search.label_tag }}
+                    {{ search_form.search }}
+                </div>
+                
+                <div>
+                    {{ search_form.age_min.label_tag }}
+                    {{ search_form.age_min }}
+                </div>
+                
+                <div>
+                    {{ search_form.age_max.label_tag }}
+                    {{ search_form.age_max }}
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-2">
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition duration-200">
+                        <i class="fas fa-search mr-1"></i>
+                        Buscar
+                    </button>
+                    <a href="{% url 'clients' %}" 
+                       class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition duration-200">
+                        <i class="fas fa-times mr-1"></i>
+                        Limpar
+                    </a>
+                </div>
+                
+                {% if search_form.is_bound and total_clients > 0 %}
+                <span class="text-sm text-gray-600">
+                    <i class="fas fa-filter mr-1"></i>
+                    Filtros aplicados
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if search_form.errors %}
+                <div class="text-red-600 text-sm">
+                    {% for field, errors in search_form.errors.items %}
+                        {% for error in errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </form>
     </div>
 
     {% if clients %}
+        <!-- Ações em Lote (oculto por padrão) -->
+        <div id="bulk-actions" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <form id="bulk-form" method="POST" action="{% url 'bulk_delete_clients' %}">
+                {% csrf_token %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm font-medium text-yellow-800">
+                            <span id="selected-count">0</span> cliente(s) selecionado(s)
+                        </span>
+                        <button type="button" onclick="selectAll()" 
+                                class="text-sm text-blue-600 hover:text-blue-800">
+                            Selecionar Todos
+                        </button>
+                        <button type="button" onclick="deselectAll()" 
+                                class="text-sm text-gray-600 hover:text-gray-800">
+                            Desmarcar Todos
+                        </button>
+                    </div>
+                    <button type="button" onclick="confirmBulkDelete()" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition duration-200">
+                        <i class="fas fa-trash mr-1"></i>
+                        Excluir Selecionados
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Clientes -->
         <div class="overflow-x-auto">
             <table class="min-w-full table-auto">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="bulk-header hidden px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="select-all-header" onchange="toggleAllFromHeader()">
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Nome
                         </th>
@@ -36,6 +133,12 @@
                             Idade
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Faixa Etária
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cadastrado em
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Ações
                         </th>
                     </tr>
@@ -43,26 +146,56 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for client in clients %}
                     <tr class="hover:bg-gray-50">
+                        <td class="bulk-checkbox hidden px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" name="client_ids[]" value="{{ client.id }}" 
+                                   class="client-checkbox" onchange="updateSelectedCount()">
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ client.name }}
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8">
+                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span class="text-blue-600 font-medium text-sm">
+                                            {{ client.name|first|upper }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    {{ client.name }}
+                                </div>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ client.email }}
+                            <a href="mailto:{{ client.email }}" class="text-blue-600 hover:text-blue-800">
+                                {{ client.email }}
+                            </a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ client.age }} anos
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if client.get_age_group == 'Jovem Adulto' %}bg-green-100 text-green-800
+                                {% elif client.get_age_group == 'Adulto' %}bg-blue-100 text-blue-800
+                                {% elif client.get_age_group == 'Adulto Maduro' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-purple-100 text-purple-800{% endif %}">
+                                {{ client.get_age_group }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ client.created_at|date:"d/m/Y" }}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <a href="{% url 'detail_client' client.id %}" class="text-blue-600 hover:text-blue-900">
-                                Ver
+                            <a href="{% url 'detail_client' client.id %}" 
+                               class="text-blue-600 hover:text-blue-900 transition duration-200">
+                                <i class="fas fa-eye"></i> Ver
                             </a>
-                            <a href="{% url 'update_client' client.id %}" class="text-green-600 hover:text-green-900">
-                                Editar
+                            <a href="{% url 'update_client' client.id %}" 
+                               class="text-green-600 hover:text-green-900 transition duration-200">
+                                <i class="fas fa-edit"></i> Editar
                             </a>
                             <a href="{% url 'delete_client' client.id %}" 
-                               class="text-red-600 hover:text-red-900"
-                               onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
-                                Excluir
+                               class="text-red-600 hover:text-red-900 transition duration-200">
+                                <i class="fas fa-trash"></i> Excluir
                             </a>
                         </td>
                     </tr>
@@ -75,27 +208,18 @@
         {% if clients.paginator.num_pages > 1 %}
         <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">
             <div class="flex flex-1 justify-between sm:hidden">
-                <!-- Navegação mobile -->
                 {% if clients.has_previous %}
-                    <a href="?page={{ clients.previous_page_number }}" 
+                    <a href="?page={{ clients.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.age_min %}&age_min={{ request.GET.age_min }}{% endif %}{% if request.GET.age_max %}&age_max={{ request.GET.age_max }}{% endif %}" 
                        class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Anterior
                     </a>
-                {% else %}
-                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400">
-                        Anterior
-                    </span>
                 {% endif %}
                 
                 {% if clients.has_next %}
-                    <a href="?page={{ clients.next_page_number }}" 
+                    <a href="?page={{ clients.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.age_min %}&age_min={{ request.GET.age_min }}{% endif %}{% if request.GET.age_max %}&age_max={{ request.GET.age_max }}{% endif %}" 
                        class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Próxima
                     </a>
-                {% else %}
-                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400">
-                        Próxima
-                    </span>
                 {% endif %}
             </div>
             
@@ -112,63 +236,31 @@
                     </p>
                 </div>
                 <div>
-                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                        <!-- Botão Anterior -->
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                         {% if clients.has_previous %}
-                            <a href="?page={{ clients.previous_page_number }}" 
-                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                                <span class="sr-only">Anterior</span>
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-                                </svg>
+                            <a href="?page={{ clients.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.age_min %}&age_min={{ request.GET.age_min }}{% endif %}{% if request.GET.age_max %}&age_max={{ request.GET.age_max }}{% endif %}" 
+                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
                             </a>
-                        {% else %}
-                            <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300">
-                                <span class="sr-only">Anterior</span>
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
                         {% endif %}
 
-                        <!-- Números das páginas -->
                         {% for page_num in clients.paginator.page_range %}
                             {% if page_num == clients.number %}
-                                <span class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                <span class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
                                     {{ page_num }}
                                 </span>
                             {% elif page_num > clients.number|add:'-3' and page_num < clients.number|add:'3' %}
-                                <a href="?page={{ page_num }}" 
-                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                <a href="?page={{ page_num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.age_min %}&age_min={{ request.GET.age_min }}{% endif %}{% if request.GET.age_max %}&age_max={{ request.GET.age_max }}{% endif %}" 
+                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                     {{ page_num }}
                                 </a>
-                            {% elif page_num == 1 or page_num == clients.paginator.num_pages %}
-                                <a href="?page={{ page_num }}" 
-                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                                    {{ page_num }}
-                                </a>
-                            {% elif page_num == clients.number|add:'-4' or page_num == clients.number|add:'4' %}
-                                <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
-                                    ...
-                                </span>
                             {% endif %}
                         {% endfor %}
 
-                        <!-- Botão Próxima -->
                         {% if clients.has_next %}
-                            <a href="?page={{ clients.next_page_number }}" 
-                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                                <span class="sr-only">Próxima</span>
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        {% else %}
-                            <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300">
-                                <span class="sr-only">Próxima</span>
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                                </svg>
+                            <a href="?page={{ clients.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.age_min %}&age_min={{ request.GET.age_min }}{% endif %}{% if request.GET.age_max %}&age_max={{ request.GET.age_max }}{% endif %}" 
+                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
                             </a>
                         {% endif %}
                     </nav>
@@ -178,14 +270,137 @@
         {% endif %}
 
     {% else %}
-        <div class="text-center py-8">
-            <div class="text-gray-500 text-lg mb-4">
-                Nenhum cliente cadastrado ainda.
+        <!-- Estado vazio -->
+        <div class="text-center py-12">
+            <div class="mx-auto h-24 w-24 text-gray-400 mb-4">
+                <i class="fas fa-users text-6xl"></i>
             </div>
-            <a href="{% url 'create_client' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Cadastrar Primeiro Cliente
+            <h3 class="text-lg font-medium text-gray-900 mb-2">
+                {% if search_form.is_bound %}
+                    Nenhum cliente encontrado
+                {% else %}
+                    Nenhum cliente cadastrado ainda
+                {% endif %}
+            </h3>
+            <p class="text-gray-500 mb-6">
+                {% if search_form.is_bound %}
+                    Tente ajustar os filtros de busca ou 
+                    <a href="{% url 'clients' %}" class="text-blue-600 hover:text-blue-800">limpar a busca</a>.
+                {% else %}
+                    Comece cadastrando seu primeiro cliente.
+                {% endif %}
+            </p>
+            <a href="{% url 'create_client' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                {% if search_form.is_bound %}Cadastrar Novo Cliente{% else %}Cadastrar Primeiro Cliente{% endif %}
             </a>
         </div>
     {% endif %}
 </div>
+
+<!-- JavaScript para funcionalidades avançadas -->
+<script>
+let bulkMode = false;
+
+function toggleBulkActions() {
+    bulkMode = !bulkMode;
+    const bulkActions = document.getElementById('bulk-actions');
+    const bulkHeaders = document.querySelectorAll('.bulk-header');
+    const bulkCheckboxes = document.querySelectorAll('.bulk-checkbox');
+    
+    if (bulkMode) {
+        bulkActions.classList.remove('hidden');
+        bulkHeaders.forEach(header => header.classList.remove('hidden'));
+        bulkCheckboxes.forEach(checkbox => checkbox.classList.remove('hidden'));
+    } else {
+        bulkActions.classList.add('hidden');
+        bulkHeaders.forEach(header => header.classList.add('hidden'));
+        bulkCheckboxes.forEach(checkbox => checkbox.classList.add('hidden'));
+        deselectAll();
+    }
+}
+
+function selectAll() {
+    document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('select-all-header').checked = true;
+    updateSelectedCount();
+}
+
+function deselectAll() {
+    document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('select-all-header').checked = false;
+    updateSelectedCount();
+}
+
+function toggleAllFromHeader() {
+    const headerCheckbox = document.getElementById('select-all-header');
+    document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+        checkbox.checked = headerCheckbox.checked;
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selectedCount = document.querySelectorAll('.client-checkbox:checked').length;
+    document.getElementById('selected-count').textContent = selectedCount;
+    
+    // Atualizar estado do checkbox do cabeçalho
+    const totalCheckboxes = document.querySelectorAll('.client-checkbox').length;
+    const headerCheckbox = document.getElementById('select-all-header');
+    
+    if (selectedCount === 0) {
+        headerCheckbox.indeterminate = false;
+        headerCheckbox.checked = false;
+    } else if (selectedCount === totalCheckboxes) {
+        headerCheckbox.indeterminate = false;
+        headerCheckbox.checked = true;
+    } else {
+        headerCheckbox.indeterminate = true;
+    }
+}
+
+function confirmBulkDelete() {
+    const selectedCount = document.querySelectorAll('.client-checkbox:checked').length;
+    
+    if (selectedCount === 0) {
+        alert('Por favor, selecione pelo menos um cliente para excluir.');
+        return;
+    }
+    
+    const confirmMessage = `Tem certeza que deseja excluir ${selectedCount} cliente(s) selecionado(s)?\n\nEsta ação não pode ser desfeita.`;
+    
+    if (confirm(confirmMessage)) {
+        // Adicionar os checkboxes selecionados ao formulário de exclusão em lote
+        const form = document.getElementById('bulk-form');
+        const selectedCheckboxes = document.querySelectorAll('.client-checkbox:checked');
+        
+        // Limpar inputs anteriores
+        const existingInputs = form.querySelectorAll('input[name="client_ids[]"]');
+        existingInputs.forEach(input => input.remove());
+        
+        // Adicionar novos inputs para os IDs selecionados
+        selectedCheckboxes.forEach(checkbox => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'client_ids[]';
+            hiddenInput.value = checkbox.value;
+            form.appendChild(hiddenInput);
+        });
+        
+        // Submeter o formulário
+        form.submit();
+    }
+}
+
+// Inicializar contadores quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelectedCount();
+});
+</script>
+
 {% endblock %}
