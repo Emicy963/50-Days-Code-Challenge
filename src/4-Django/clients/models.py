@@ -1,4 +1,3 @@
-# models.py
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -69,7 +68,6 @@ class Client(models.Model):
         """
         Override do método save para garantir validação antes de salvar
         """
-        # CORREÇÃO: Chamar o método, não apenas referenciar
         self.validation_age()
         self.full_clean()  # Chama clean() e outras validações
         super().save(*args, **kwargs)
