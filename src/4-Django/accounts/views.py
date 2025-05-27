@@ -67,6 +67,9 @@ def login_view(request):
             return redirect('login')
         
 def logout_view(request):
+    """
+    Método para fazer logout do site
+    """
     logout(request)
     messages.success(request, 'Logout realizado com sucesso!')
     return redirect('login')
