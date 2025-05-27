@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import login, logout, authenticate, views
+from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 
 def resgister_view(request):
@@ -65,3 +65,8 @@ def login_view(request):
         except Exception as err:
             messages.error(request, f'Erro: {str(err)}')
             return redirect('login')
+        
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Logout realizado com sucesso!')
+    return redirect('login')
