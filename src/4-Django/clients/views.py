@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 from .models import Client
 from .forms import ClientForm, ClientSearchForm
 
+@login_required
 def get_clients(request):
     """
     Método para listar clientes com busca e paginação
@@ -41,6 +43,7 @@ def get_clients(request):
         'search_form': search_form,
     })
 
+@login_required
 def create_client(request):
     """
     Método para criar cliente usando ModelForm
@@ -70,6 +73,7 @@ def create_client(request):
     
     return render(request, 'create_client.html', {'form': form})
 
+@login_required
 def update_client(request, id):
     """
     Método para atualizar cliente usando ModelForm
@@ -104,6 +108,7 @@ def update_client(request, id):
         'client': client
     })
 
+@login_required
 def delete_client(request, id):
     """
     Método para apagar um cliente com confirmação
@@ -127,6 +132,7 @@ def delete_client(request, id):
     
     return render(request, 'delete_client.html', {'client': client})
 
+@login_required
 def detail_client(request, id):
     """
     Método para exibir detalhes de um cliente
@@ -134,6 +140,7 @@ def detail_client(request, id):
     client = get_object_or_404(Client, id=id)
     return render(request, 'detail_client.html', {'client': client})
 
+@login_required
 def bulk_delete_clients(request):
     """
     Método para exclusão em lote de clientes
