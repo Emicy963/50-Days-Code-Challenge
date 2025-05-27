@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 
-def resgister_view(request):
+def register_view(request):
     """
     Método para resgister um novo user no site
     """
@@ -15,14 +15,22 @@ def resgister_view(request):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email=email).exists():  # erificar se o email já existe
             messages.error(request, 'Este email já foi cadastrado. Tente um diferente!')
+            return redirect('register')
+        if User.objects.filter(username=name).exists():
+            messages.error(request, 'Este nome de usuário já foi cadastrado. Tente um diferente!')
+            return redirect('register')
         
         if password!=confirm_password:
             messages.error(request, 'As passwords são diferentes!')
-            return redirect('resgister')
+            return redirect('register')
+        if len(password) < 8:
+            messages.error(request, 'A password deve ter pelo menos 8 caracteres!')
+            return redirect('register')
         
         try:
+            # Criar e autenticar o usuário
             user = User.objects.create_user(
                 username=name,
                 email=email,
@@ -30,7 +38,7 @@ def resgister_view(request):
             )
             user = authenticate(request, username=name, password=password)
             if user is not None:
-                login(request, user)
+                login(request, user)  # Fazer login do usuário após o registro
                 messages.success(request, 'Conta criada com sucesso!')
                 return redirect('clients')
             else:
@@ -52,8 +60,11 @@ def login_view(request):
         """
         username = request.POST.get('username')
         password = request.POST.get('password')
-
+        if not username or not password:
+            messages.error(request, 'Por favor, preencha todos os campos!')
+            return redirect('login')
         try:
+            # Verificar se o usuário existe e autenticar
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
