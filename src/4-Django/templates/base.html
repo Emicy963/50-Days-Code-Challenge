@@ -14,12 +14,27 @@
                     <h1 class="text-xl font-bold">Sistema de Clientes</h1>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="{% url 'clients' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
-                        Clientes
-                    </a>
-                    <a href="{% url 'create_client' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
-                        Novo Cliente
-                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'clients' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
+                            Clientes
+                        </a>
+                        <a href="{% url 'create_client' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
+                            Novo Cliente
+                        </a>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm">Olá, {{ user.first_name|default:user.username }}!</span>
+                            <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded text-sm">
+                                Logout
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="bg-green-500 hover:bg-green-600 px-3 py-2 rounded">
+                            Login
+                        </a>
+                        <a href="{% url 'register' %}" class="bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded">
+                            Registrar
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
