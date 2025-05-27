@@ -40,3 +40,28 @@ def resgister_view(request):
             messages.error(request, f'Erro: {str(err)}')
             return redirect('register')
 
+def login_view(request):
+    """
+    Método para fazer login no site
+    """
+    if request.method=='GET':
+        return render(request, 'login.html')
+    elif request.method=='POST':
+        """
+        Método para fazer login no site
+        """
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        try:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'Login realizado com sucesso!')
+                return redirect('clients')
+            else:
+                messages.error(request, 'Usuário ou senha inválida!')
+                return redirect('login')
+        except Exception as err:
+            messages.error(request, f'Erro: {str(err)}')
+            return redirect('login')
