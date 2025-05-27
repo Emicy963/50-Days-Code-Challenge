@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro - Sistema de Clientes{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
+    <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Registro</h2>
+        <p class="text-gray-600 mt-2">Crie sua conta</p>
+    </div>
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                Nome
+            </label>
+            <input 
+                type="text" 
+                id="name" 
+                name="name" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Digite seu nome"
+            >
+        </div>
+
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                Email
+            </label>
+            <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Digite seu email"
+            >
+        </div>
+
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                Senha
+            </label>
+            <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Digite sua senha"
+            >
+        </div>
+
+        <div>
+            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">
+                Confirmar Senha
+            </label>
+            <input 
+                type="password" 
+                id="confirm_password" 
+                name="confirm_password" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Confirme sua senha"
+            >
+        </div>
+
+        <button 
+            type="submit" 
+            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200"
+        >
+            Registrar
+        </button>
+    </form>
+
+    <div class="mt-6 text-center">
+        <p class="text-sm text-gray-600">
+            Já tem uma conta? 
+            <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                Faça login aqui
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}
