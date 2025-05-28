@@ -1,3 +1,4 @@
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -5,6 +6,25 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from .models import Client
 from .forms import ClientForm, ClientSearchForm
+
+# Decorator personalizado para verificar grupos
+def group_required(*group_names):
+    """
+    Decorator para verificar se o usuário pertence a um dos grupos especificados
+    """
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            if request.user.is_authenticated:
+                if request.user.is_superuser:
+                    return view_func(request, *args, **kwargs)
+                
+                user_groups = request.user.groups.values_list('name', flat=True)
+                if any(group in user_groups for group in group_names):
+                    return view_func(request, *args, **kwargs)
+            
+            return HttpResponseForbidden("Você não tem permissão para acessar esta página.")
+        return _wrapped_view
+    return decorator
 
 @login_required
 def get_clients(request):
