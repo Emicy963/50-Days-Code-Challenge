@@ -1,3 +1,4 @@
+from email.headerregistry import Group
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -26,6 +27,7 @@ def group_required(*group_names):
         return _wrapped_view
     return decorator
 
+@login_required
 @group_required('Administradores', 'Gerentes', 'Funcionários')
 def get_clients(request):
     """
@@ -215,3 +217,39 @@ def bulk_delete_clients(request):
             messages.warning(request, 'Nenhum cliente selecionado.')
     
     return redirect('clients')
+
+# Views para gerenciamento de grupos
+@login_required
+@group_required('Administradores')
+def manage_users(request):
+    """
+    View para gerenciar usuários e seus grupos
+    Apenas Administradores podem acessar
+    """
+    from django.contrib.auth.models import User
+    
+    users = User.objects.all().prefetch_related('groups')
+    groups = Group.objects.all()
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        group_ids = request.POST.getlist('groups')
+        
+        try:
+            user = User.objects.get(id=user_id)
+            user.groups.clear()
+            
+            for group_id in group_ids:
+                group = Group.objects.get(id=group_id)
+                user.groups.add(group)
+            
+            messages.success(request, f'Grupos do usuário {user.username} atualizados com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao atualizar grupos: {str(e)}')
+        
+        return redirect('manage_users')
+    
+    return render(request, 'manage_users.html', {
+        'users': users,
+        'groups': groups,
+    })
