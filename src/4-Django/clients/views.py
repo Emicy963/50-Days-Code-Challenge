@@ -26,10 +26,11 @@ def group_required(*group_names):
         return _wrapped_view
     return decorator
 
-@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
 def get_clients(request):
     """
     Método para listar clientes com busca e paginação
+    Todos os grupos autenticados podem visualizar
     """
     search_form = ClientSearchForm(request.GET)
     clients_list = Client.objects.all().order_by('name')
@@ -57,10 +58,19 @@ def get_clients(request):
     page_number = request.GET.get('page')
     clients = paginator.get_page(page_number)
     
+    # Verificar permissões para mostrar botões na template
+    user_groups = request.user.groups.values_list('name', flat=True)
+    can_create = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_delete = 'Administradores' in user_groups or request.user.is_superuser
+    
     return render(request, 'clients.html', {
         'clients': clients,
         'total_clients': clients_list.count(),
         'search_form': search_form,
+        'can_create': can_create,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
     })
 
 @login_required
