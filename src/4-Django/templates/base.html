@@ -5,33 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Clientes{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hover-scale {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
+                    <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
                     <h1 class="text-xl font-bold">Sistema de Clientes</h1>
                 </div>
-                <div class="flex space-x-4">
+                <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'clients' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
+                        <a href="{% url 'clients' %}" class="hover:bg-blue-700 px-3 py-2 rounded transition duration-200 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                             Clientes
                         </a>
-                        <a href="{% url 'create_client' %}" class="hover:bg-blue-700 px-3 py-2 rounded">
-                            Novo Cliente
-                        </a>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm">Olá, {{ user.first_name|default:user.username }}!</span>
-                            <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded text-sm">
+                        
+                        {% if user.groups.all|length > 0 %}
+                            {% for group in user.groups.all %}
+                                {% if group.name == 'Administradores' or group.name == 'Gerentes' %}
+                                    <a href="{% url 'create_client' %}" class="hover:bg-blue-700 px-3 py-2 rounded transition duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                        Novo Cliente
+                                    </a>
+                                    {% break %}
+                                {% endif %}
+                            {% endfor %}
+                        {% elif user.is_superuser %}
+                            <a href="{% url 'create_client' %}" class="hover:bg-blue-700 px-3 py-2 rounded transition duration-200 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Novo Cliente
+                            </a>
+                        {% endif %}
+                        
+                        {% if user.is_superuser or 'Administradores' in user.groups.all|join:',' %}
+                            <a href="{% url 'manage_users' %}" class="hover:bg-blue-700 px-3 py-2 rounded transition duration-200 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Gerenciar
+                            </a>
+                        {% endif %}
+                        
+                        <div class="flex items-center space-x-3 border-l border-blue-500 pl-3">
+                            <div class="flex flex-col text-right">
+                                <span class="text-sm font-medium">{{ user.first_name|default:user.username }}</span>
+                                {% if user.groups.all %}
+                                    <span class="text-xs text-blue-200">
+                                        {% for group in user.groups.all %}
+                                            {{ group.name }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                {% elif user.is_superuser %}
+                                    <span class="text-xs text-blue-200">Superusuário</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded text-sm transition duration-200 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
                                 Logout
                             </a>
                         </div>
                     {% else %}
-                        <a href="{% url 'login' %}" class="bg-green-500 hover:bg-green-600 px-3 py-2 rounded">
+                        <a href="{% url 'login' %}" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded transition duration-200 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
                             Login
                         </a>
-                        <a href="{% url 'register' %}" class="bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded">
+                        <a href="{% url 'register' %}" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded transition duration-200 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
                             Registrar
                         </a>
                     {% endif %}
@@ -43,20 +116,50 @@
     {% if messages %}
         <div class="max-w-6xl mx-auto px-4 mt-4">
             {% for message in messages %}
-                <div class="{% if message.tags == 'success' %}bg-green-100 border border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %} px-4 py-3 rounded mb-4">
-                    {{ message }}
+                <div class="fade-in {% if message.tags == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% elif message.tags == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif message.tags == 'warning' %}bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} px-4 py-3 rounded mb-4 shadow-md">
+                    <div class="flex items-center">
+                        {% if message.tags == 'success' %}
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        {% elif message.tags == 'error' %}
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        {% elif message.tags == 'warning' %}
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow">
         {% block content %}
         {% endblock %}
     </main>
 
-    <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
-        <p>&copy; 2025 Anderson Cafurica. Todos os direitos reservados.</p>
+    <footer class="bg-gray-800 text-white text-center py-6 mt-auto">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm">&copy; 2025 Anderson Cafurica. Todos os direitos reservados.</p>
+                <div class="flex items-center mt-2 md:mt-0">
+                    <span class="text-xs text-gray-400 mr-2">Desenvolvido com</span>
+                    <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <span class="text-xs text-gray-400 ml-2">e Django</span>
+                </div>
+            </div>
+        </div>
     </footer>
 </body>
 </html>
