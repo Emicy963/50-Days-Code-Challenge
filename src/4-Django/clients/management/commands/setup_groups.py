@@ -9,36 +9,66 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Criar os grupos
         administradores, created = Group.objects.get_or_create(name='Administradores')
+        if created:
+            self.stdout.write(self.style.SUCCESS('Grupo "Administradores" criado'))
+        else:
+            self.stdout.write(self.style.WARNING('Grupo "Administradores" já existe'))
+            
         gerentes, created = Group.objects.get_or_create(name='Gerentes')
+        if created:
+            self.stdout.write(self.style.SUCCESS('Grupo "Gerentes" criado'))
+        else:
+            self.stdout.write(self.style.WARNING('Grupo "Gerentes" já existe'))
+            
         funcionarios, created = Group.objects.get_or_create(name='Funcionários')
+        if created:
+            self.stdout.write(self.style.SUCCESS('Grupo "Funcionários" criado'))
+        else:
+            self.stdout.write(self.style.WARNING('Grupo "Funcionários" já existe'))
 
         # Obter o content type do modelo Client
         client_content_type = ContentType.objects.get_for_model(Client)
 
-        # Criar permissões customizadas se não existirem
-        view_client_perm, created = Permission.objects.get_or_create(
-            codename='view_client',
-            name='Can view client',
-            content_type=client_content_type,
-        )
+        # Buscar permissões existentes (criadas automaticamente pelo Django)
+        try:
+            view_client_perm = Permission.objects.get(
+                codename='view_client',
+                content_type=client_content_type,
+            )
+            self.stdout.write('Permissão "view_client" encontrada')
+        except Permission.DoesNotExist:
+            self.stdout.write(self.style.ERROR('Permissão "view_client" não encontrada. Execute as migrações primeiro.'))
+            return
         
-        add_client_perm, created = Permission.objects.get_or_create(
-            codename='add_client',
-            name='Can add client',
-            content_type=client_content_type,
-        )
+        try:
+            add_client_perm = Permission.objects.get(
+                codename='add_client',
+                content_type=client_content_type,
+            )
+            self.stdout.write('Permissão "add_client" encontrada')
+        except Permission.DoesNotExist:
+            self.stdout.write(self.style.ERROR('Permissão "add_client" não encontrada. Execute as migrações primeiro.'))
+            return
         
-        change_client_perm, created = Permission.objects.get_or_create(
-            codename='change_client',
-            name='Can change client',
-            content_type=client_content_type,
-        )
+        try:
+            change_client_perm = Permission.objects.get(
+                codename='change_client',
+                content_type=client_content_type,
+            )
+            self.stdout.write('Permissão "change_client" encontrada')
+        except Permission.DoesNotExist:
+            self.stdout.write(self.style.ERROR('Permissão "change_client" não encontrada. Execute as migrações primeiro.'))
+            return
         
-        delete_client_perm, created = Permission.objects.get_or_create(
-            codename='delete_client',
-            name='Can delete client',
-            content_type=client_content_type,
-        )
+        try:
+            delete_client_perm = Permission.objects.get(
+                codename='delete_client',
+                content_type=client_content_type,
+            )
+            self.stdout.write('Permissão "delete_client" encontrada')
+        except Permission.DoesNotExist:
+            self.stdout.write(self.style.ERROR('Permissão "delete_client" não encontrada. Execute as migrações primeiro.'))
+            return
 
         # Configurar permissões para cada grupo
         
@@ -66,7 +96,7 @@ class Command(BaseCommand):
             self.style.SUCCESS('Grupos e permissões configurados com sucesso!')
         )
         
-        self.stdout.write('Grupos criados:')
+        self.stdout.write('\nGrupos criados:')
         self.stdout.write(f'- Administradores: {list(administradores.permissions.values_list("name", flat=True))}')
         self.stdout.write(f'- Gerentes: {list(gerentes.permissions.values_list("name", flat=True))}')
         self.stdout.write(f'- Funcionários: {list(funcionarios.permissions.values_list("name", flat=True))}')
