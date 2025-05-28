@@ -74,9 +74,11 @@ def get_clients(request):
     })
 
 @login_required
+@group_required('Administradores', 'Gerentes')
 def create_client(request):
     """
     Método para criar cliente usando ModelForm
+    Apenas Administradores e Gerentes podem criar
     """
     if request.method == 'POST':
         form = ClientForm(request.POST)
@@ -104,9 +106,11 @@ def create_client(request):
     return render(request, 'create_client.html', {'form': form})
 
 @login_required
+@group_required('Administradores', 'Gerentes')
 def update_client(request, id):
     """
     Método para atualizar cliente usando ModelForm
+    Apenas Administradores e Gerentes podem editar
     """
     client = get_object_or_404(Client, id=id)
     
@@ -139,9 +143,11 @@ def update_client(request, id):
     })
 
 @login_required
+@group_required('Administradores')
 def delete_client(request, id):
     """
     Método para apagar um cliente com confirmação
+    Apenas Administradores podem deletar
     """
     client = get_object_or_404(Client, id=id)
     
@@ -163,17 +169,31 @@ def delete_client(request, id):
     return render(request, 'delete_client.html', {'client': client})
 
 @login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
 def detail_client(request, id):
     """
     Método para exibir detalhes de um cliente
+    Todos os grupos podem visualizar detalhes
     """
     client = get_object_or_404(Client, id=id)
-    return render(request, 'detail_client.html', {'client': client})
+    
+    # Verificar permissões para mostrar botões na template
+    user_groups = request.user.groups.values_list('name', flat=True)
+    can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_delete = 'Administradores' in user_groups or request.user.is_superuser
+    
+    return render(request, 'detail_client.html', {
+        'client': client,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+    })
 
 @login_required
+@group_required('Administradores')
 def bulk_delete_clients(request):
     """
     Método para exclusão em lote de clientes
+    Apenas Administradores podem fazer exclusão em lote
     """
     if request.method == 'POST':
         client_ids = request.POST.getlist('client_ids[]')
