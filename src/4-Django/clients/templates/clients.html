@@ -18,17 +18,19 @@
             {% endif %}
         </div>
         <div class="flex space-x-2">
-            <a href="{% url 'create_client' %}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
-                <i class="fas fa-plus mr-2"></i>
-                Novo Cliente
-            </a>
-            {% if total_clients > 0 %}
-            <button onclick="toggleBulkActions()" 
-                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-200">
-                <i class="fas fa-check-square mr-2"></i>
-                Seleção em Lote
-            </button>
+            {% if can_create %}
+                <a href="{% url 'create_client' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Novo Cliente
+                </a>
+            {% endif %}
+            {% if total_clients > 0 and can_delete %}
+                <button onclick="toggleBulkActions()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                    <i class="fas fa-check-square mr-2"></i>
+                    Seleção em Lote
+                </button>
             {% endif %}
         </div>
     </div>
@@ -88,7 +90,8 @@
     </div>
 
     {% if clients %}
-        <!-- Ações em Lote (oculto por padrão) -->
+        <!-- Ações em Lote (oculto por padrão) - Apenas para Administradores -->
+        {% if can_delete %}
         <div id="bulk-actions" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <form id="bulk-form" method="POST" action="{% url 'bulk_delete_clients' %}">
                 {% csrf_token %}
@@ -114,15 +117,18 @@
                 </div>
             </form>
         </div>
+        {% endif %}
 
         <!-- Tabela de Clientes -->
         <div class="overflow-x-auto">
             <table class="min-w-full table-auto">
                 <thead class="bg-gray-50">
                     <tr>
+                        {% if can_delete %}
                         <th class="bulk-header hidden px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             <input type="checkbox" id="select-all-header" onchange="toggleAllFromHeader()">
                         </th>
+                        {% endif %}
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Nome
                         </th>
@@ -138,18 +144,22 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Cadastrado em
                         </th>
+                        {% if can_edit or can_delete %}
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Ações
                         </th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for client in clients %}
                     <tr class="hover:bg-gray-50">
+                        {% if can_delete %}
                         <td class="bulk-checkbox hidden px-6 py-4 whitespace-nowrap">
                             <input type="checkbox" name="client_ids[]" value="{{ client.id }}" 
                                    class="client-checkbox" onchange="updateSelectedCount()">
                         </td>
+                        {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-8 w-8">
@@ -160,7 +170,9 @@
                                     </div>
                                 </div>
                                 <div class="ml-3">
-                                    {{ client.name }}
+                                    <a href="{% url 'detail_client' client.id %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                        {{ client.name }}
+                                    </a>
                                 </div>
                             </div>
                         </td>
@@ -184,20 +196,27 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ client.created_at|date:"d/m/Y" }}
                         </td>
+                        {% if can_edit or can_delete %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                             <a href="{% url 'detail_client' client.id %}" 
                                class="text-blue-600 hover:text-blue-900 transition duration-200">
                                 <i class="fas fa-eye"></i> Ver
                             </a>
+                            {% if can_edit %}
                             <a href="{% url 'update_client' client.id %}" 
                                class="text-green-600 hover:text-green-900 transition duration-200">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
+                            {% endif %}
+                            {% if can_delete %}
                             <a href="{% url 'delete_client' client.id %}" 
-                               class="text-red-600 hover:text-red-900 transition duration-200">
+                               class="text-red-600 hover:text-red-900 transition duration-200"
+                               onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
                                 <i class="fas fa-trash"></i> Excluir
                             </a>
+                            {% endif %}
                         </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -290,11 +309,13 @@
                     Comece cadastrando seu primeiro cliente.
                 {% endif %}
             </p>
+            {% if can_create %}
             <a href="{% url 'create_client' %}" 
                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
                 <i class="fas fa-plus mr-2"></i>
                 {% if search_form.is_bound %}Cadastrar Novo Cliente{% else %}Cadastrar Primeiro Cliente{% endif %}
             </a>
+            {% endif %}
         </div>
     {% endif %}
 </div>
@@ -325,7 +346,10 @@ function selectAll() {
     document.querySelectorAll('.client-checkbox').forEach(checkbox => {
         checkbox.checked = true;
     });
-    document.getElementById('select-all-header').checked = true;
+    const headerCheckbox = document.getElementById('select-all-header');
+    if (headerCheckbox) {
+        headerCheckbox.checked = true;
+    }
     updateSelectedCount();
 }
 
@@ -333,7 +357,10 @@ function deselectAll() {
     document.querySelectorAll('.client-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
-    document.getElementById('select-all-header').checked = false;
+    const headerCheckbox = document.getElementById('select-all-header');
+    if (headerCheckbox) {
+        headerCheckbox.checked = false;
+    }
     updateSelectedCount();
 }
 
@@ -347,20 +374,25 @@ function toggleAllFromHeader() {
 
 function updateSelectedCount() {
     const selectedCount = document.querySelectorAll('.client-checkbox:checked').length;
-    document.getElementById('selected-count').textContent = selectedCount;
+    const selectedCountElement = document.getElementById('selected-count');
+    if (selectedCountElement) {
+        selectedCountElement.textContent = selectedCount;
+    }
     
     // Atualizar estado do checkbox do cabeçalho
     const totalCheckboxes = document.querySelectorAll('.client-checkbox').length;
     const headerCheckbox = document.getElementById('select-all-header');
     
-    if (selectedCount === 0) {
-        headerCheckbox.indeterminate = false;
-        headerCheckbox.checked = false;
-    } else if (selectedCount === totalCheckboxes) {
-        headerCheckbox.indeterminate = false;
-        headerCheckbox.checked = true;
-    } else {
-        headerCheckbox.indeterminate = true;
+    if (headerCheckbox) {
+        if (selectedCount === 0) {
+            headerCheckbox.indeterminate = false;
+            headerCheckbox.checked = false;
+        } else if (selectedCount === totalCheckboxes) {
+            headerCheckbox.indeterminate = false;
+            headerCheckbox.checked = true;
+        } else {
+            headerCheckbox.indeterminate = true;
+        }
     }
 }
 
