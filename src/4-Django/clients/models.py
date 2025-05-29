@@ -353,3 +353,20 @@ class Pedido(models.Model):
             'urgente': 'dark',
         }
         return prioridade_classes.get(self.prioridade, 'secondary')
+    def can_be_cancelled(self):
+        """
+        Verifica se o pedido pode ser cancelado
+        """
+        return self.status in ['pendente', 'processando']
+
+    def cancel_order(self, reason=''):
+        """
+        Cancela o pedido
+        """
+        if not self.can_be_cancelled():
+            raise ValidationError('Este pedido não pode ser cancelado.')
+        
+        self.status = 'cancelado'
+        if reason:
+            self.observacoes = f"{self.observacoes}\n\nMotivo do cancelamento: {reason}".strip()
+        self.save()
