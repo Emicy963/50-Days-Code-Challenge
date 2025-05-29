@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from decimal import Decimal
 
 class Client(models.Model):
     name = models.CharField(
@@ -370,3 +371,48 @@ class Pedido(models.Model):
         if reason:
             self.observacoes = f"{self.observacoes}\n\nMotivo do cancelamento: {reason}".strip()
         self.save()
+
+    @classmethod
+    def get_status_statistics(cls):
+        """
+        Retorna estatísticas por status
+        """
+        from django.db.models import Count
+        
+        stats = cls.objects.values('status').annotate(
+            count=Count('id')
+        ).order_by('status')
+        
+        return {item['status']: item['count'] for item in stats}
+
+    @classmethod
+    def get_revenue_statistics(cls):
+        """
+        Retorna estatísticas de receita
+        """
+        from django.db.models import Sum, Avg, Count
+        from django.utils import timezone
+        
+        # Estatísticas gerais
+        total_stats = cls.objects.exclude(status='cancelado').aggregate(
+            total_orders=Count('id'),
+            total_revenue=Sum('valor_total'),
+            average_order_value=Avg('valor_total')
+        )
+        
+        # Estatísticas do mês atual
+        current_month = timezone.now().replace(day=1)
+        monthly_stats = cls.objects.filter(
+            data_pedido__gte=current_month
+        ).exclude(status='cancelado').aggregate(
+            monthly_orders=Count('id'),
+            monthly_revenue=Sum('valor_total')
+        )
+        
+        return {
+            'total_orders': total_stats['total_orders'] or 0,
+            'total_revenue': total_stats['total_revenue'] or Decimal('0.00'),
+            'average_order_value': total_stats['average_order_value'] or Decimal('0.00'),
+            'monthly_orders': monthly_stats['monthly_orders'] or 0,
+            'monthly_revenue': monthly_stats['monthly_revenue'] or Decimal('0.00'),
+        }
