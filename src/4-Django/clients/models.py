@@ -213,3 +213,21 @@ class Pedido(models.Model):
         verbose_name='Atualizado em',
         auto_now=True
     )
+    
+    class Meta:
+        verbose_name = 'Pedido'
+        verbose_name_plural = 'Pedidos'
+        ordering = ['-data_pedido']  # Mais recentes primeiro
+        indexes = [
+            models.Index(fields=['numero_pedido']),
+            models.Index(fields=['cliente', 'status']),
+            models.Index(fields=['data_pedido']),
+            models.Index(fields=['status']),
+            models.Index(fields=['prioridade']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(valor_total__gte=0),
+                name='valor_total_positivo'
+            )
+        ]
