@@ -231,3 +231,39 @@ class Pedido(models.Model):
                 name='valor_total_positivo'
             )
         ]
+
+    def __str__(self):
+        return f'Pedido {self.numero_pedido} - {self.cliente.name}'
+
+    def clean(self):
+        """
+        Validações customizadas do modelo
+        """
+        super().clean()
+        
+        # Validar valor total
+        if self.valor_total is not None and self.valor_total < 0:
+            raise ValidationError({
+                'valor_total': 'O valor total não pode ser negativo.'
+            })
+        
+        # Validar data de entrega prevista
+        if self.data_entrega_prevista:
+            from django.utils import timezone
+            if self.data_entrega_prevista < timezone.now().date():
+                raise ValidationError({
+                    'data_entrega_prevista': 'A data de entrega prevista não pode ser no passado.'
+                })
+        
+        # Validar status e data de entrega
+        if self.status == 'entregue' and not self.data_entrega_realizada:
+            raise ValidationError({
+                'data_entrega_realizada': 'Data de entrega realizada é obrigatória para pedidos entregues.'
+            })
+        
+        # Validar descrição mínima
+        if self.descricao and len(self.descricao.strip()) < 10:
+            raise ValidationError({
+                'descricao': 'Descrição deve ter pelo menos 10 caracteres.'
+            })
+
