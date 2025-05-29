@@ -283,3 +283,24 @@ class Pedido(models.Model):
         # Executar validações
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def generate_order_number(self):
+        """
+        Gera um número único para o pedido
+        """
+        import uuid
+        from django.utils import timezone
+        
+        # Formato: PED-YYYYMM-XXXX (onde XXXX são os últimos 4 dígitos do UUID)
+        now = timezone.now()
+        year_month = now.strftime('%Y%m')
+        unique_suffix = str(uuid.uuid4()).replace('-', '')[-4:].upper()
+        
+        return f'PED-{year_month}-{unique_suffix}'
+
+    def get_absolute_url(self):
+        """
+        Retorna a URL para visualizar este pedido
+        """
+        return reverse('detail_pedido', kwargs={'id': self.pk})
+
