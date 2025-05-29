@@ -267,3 +267,19 @@ class Pedido(models.Model):
                 'descricao': 'Descrição deve ter pelo menos 10 caracteres.'
             })
 
+    def save(self, *args, **kwargs):
+        """
+        Override do método save para gerar número do pedido e validações
+        """
+        # Gerar número do pedido se não existir
+        if not self.numero_pedido:
+            self.numero_pedido = self.generate_order_number()
+        
+        # Atualizar data de entrega realizada automaticamente
+        if self.status == 'entregue' and not self.data_entrega_realizada:
+            from django.utils import timezone
+            self.data_entrega_realizada = timezone.now()
+        
+        # Executar validações
+        self.full_clean()
+        super().save(*args, **kwargs)
