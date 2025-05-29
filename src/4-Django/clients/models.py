@@ -118,3 +118,83 @@ class Client(models.Model):
             'youngest': stats['min_age'] or 0,
             'oldest': stats['max_age'] or 0,
         }
+
+class Pedido(models.Model):
+    cliente = models.ForeignKey(
+        'Client',  # Referência ao modelo Client
+        on_delete=models.CASCADE,
+        related_name='pedidos',
+        verbose_name='Cliente',
+        help_text='Cliente que fez o pedido'
+    )
+    
+    numero_pedido = models.CharField(
+        verbose_name='Número do Pedido',
+        max_length=20,
+        unique=True,
+        help_text='Número único do pedido (gerado automaticamente)'
+    )
+    
+    descricao = models.TextField(
+        verbose_name='Descrição',
+        help_text='Descrição detalhada do pedido'
+    )
+    
+    valor_total = models.DecimalField(
+        verbose_name='Valor Total',
+        max_digits=10,
+        decimal_places=2,
+        help_text='Valor total do pedido em reais'
+    )
+    
+    status = models.CharField(
+        verbose_name='Status',
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pendente',
+        help_text='Status atual do pedido'
+    )
+    
+    prioridade = models.CharField(
+        verbose_name='Prioridade',
+        max_length=10,
+        choices=PRIORIDADE_CHOICES,
+        default='media',
+        help_text='Nível de prioridade do pedido'
+    )
+    
+    data_pedido = models.DateTimeField(
+        verbose_name='Data do Pedido',
+        auto_now_add=True,
+        help_text='Data e hora em que o pedido foi criado'
+    )
+    
+    data_entrega_prevista = models.DateField(
+        verbose_name='Data de Entrega Prevista',
+        null=True,
+        blank=True,
+        help_text='Data prevista para entrega do pedido'
+    )
+    
+    data_entrega_realizada = models.DateTimeField(
+        verbose_name='Data de Entrega Realizada',
+        null=True,
+        blank=True,
+        help_text='Data e hora em que o pedido foi efetivamente entregue'
+    )
+    
+    observacoes = models.TextField(
+        verbose_name='Observações',
+        blank=True,
+        help_text='Observações adicionais sobre o pedido'
+    )
+    
+    created_at = models.DateTimeField(
+        verbose_name='Criado em',
+        auto_now_add=True
+    )
+    
+    updated_at = models.DateTimeField(
+        verbose_name='Atualizado em',
+        auto_now=True
+    )
