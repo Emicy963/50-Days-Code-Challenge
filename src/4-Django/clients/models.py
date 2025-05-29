@@ -120,6 +120,21 @@ class Client(models.Model):
         }
 
 class Pedido(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('processando', 'Processando'),
+        ('enviado', 'Enviado'),
+        ('entregue', 'Entregue'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('urgente', 'Urgente'),
+    ]
+
     cliente = models.ForeignKey(
         'Client',  # Referência ao modelo Client
         on_delete=models.CASCADE,
