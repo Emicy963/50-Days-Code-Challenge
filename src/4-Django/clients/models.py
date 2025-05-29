@@ -304,3 +304,52 @@ class Pedido(models.Model):
         """
         return reverse('detail_pedido', kwargs={'id': self.pk})
 
+    @property
+    def is_overdue(self):
+        """
+        Verifica se o pedido está atrasado
+        """
+        if not self.data_entrega_prevista or self.status in ['entregue', 'cancelado']:
+            return False
+        
+        from django.utils import timezone
+        return timezone.now().date() > self.data_entrega_prevista
+
+    @property
+    def days_until_delivery(self):
+        """
+        Retorna quantos dias faltam para a entrega prevista
+        """
+        if not self.data_entrega_prevista or self.status in ['entregue', 'cancelado']:
+            return None
+        
+        from django.utils import timezone
+        delta = self.data_entrega_prevista - timezone.now().date()
+        return delta.days
+
+    @property
+    def status_display_class(self):
+        """
+        Retorna classe CSS baseada no status para estilização
+        """
+        status_classes = {
+            'pendente': 'warning',
+            'processando': 'info',
+            'enviado': 'primary',
+            'entregue': 'success',
+            'cancelado': 'danger',
+        }
+        return status_classes.get(self.status, 'secondary')
+
+    @property
+    def prioridade_display_class(self):
+        """
+        Retorna classe CSS baseada na prioridade para estilização
+        """
+        prioridade_classes = {
+            'baixa': 'success',
+            'media': 'warning',
+            'alta': 'danger',
+            'urgente': 'dark',
+        }
+        return prioridade_classes.get(self.prioridade, 'secondary')
