@@ -386,3 +386,15 @@ class PedidoBulkActionForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='Nova Prioridade'
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        action = cleaned_data.get('action')
+        
+        if action == 'update_status' and not cleaned_data.get('new_status'):
+            raise ValidationError('Selecione o novo status.')
+            
+        if action == 'update_priority' and not cleaned_data.get('new_priority'):
+            raise ValidationError('Selecione a nova prioridade.')
+            
+        return cleaned_data
