@@ -339,3 +339,35 @@ def get_pedidos(request):
         'can_delete': can_delete,
         'can_bulk_actions': can_bulk_actions,
     })
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def create_pedido(request):
+    """
+    Criar novo pedido
+    Apenas Administradores e Gerentes podem criar
+    """
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        if form.is_valid():
+            try:
+                pedido = form.save()
+                messages.success(
+                    request, 
+                    f'Pedido {pedido.numero_pedido} criado com sucesso!'
+                )
+                return redirect('detail_pedido', id=pedido.id)
+            except Exception as e:
+                messages.error(
+                    request, 
+                    f'Erro ao salvar pedido: {str(e)}'
+                )
+        else:
+            messages.error(
+                request, 
+                'Por favor, corrija os erros abaixo.'
+            )
+    else:
+        form = PedidoForm()
+    
+    return render(request, 'create_pedido.html', {'form': form})
