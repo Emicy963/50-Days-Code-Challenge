@@ -182,20 +182,43 @@ def delete_client(request, id):
 @group_required('Administradores', 'Gerentes', 'Funcionários')
 def detail_client(request, id):
     """
-    Método para exibir detalhes de um cliente
+    Método para exibir detalhes de um cliente COM seus pedidos
     Todos os grupos podem visualizar detalhes
     """
     client = get_object_or_404(Client, id=id)
+    
+    # Buscar pedidos do cliente com paginação
+    pedidos_list = client.pedidos.all().order_by('-data_pedido')
+    paginator = Paginator(pedidos_list, 5)  # 5 pedidos por página
+    page_number = request.GET.get('page')
+    pedidos = paginator.get_page(page_number)
+    
+    # Estatísticas dos pedidos do cliente
+    pedidos_stats = client.pedidos.aggregate(
+        total_pedidos=Count('id'),
+        valor_total=Sum('valor_total'),
+        valor_medio=Avg('valor_total')
+    )
+    
+    # Pedidos por status
+    pedidos_por_status = client.pedidos.values('status').annotate(
+        count=Count('id')
+    ).order_by('status')
     
     # Verificar permissões para mostrar botões na template
     user_groups = request.user.groups.values_list('name', flat=True)
     can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
     can_delete = 'Administradores' in user_groups or request.user.is_superuser
+    can_create_pedido = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
     
     return render(request, 'detail_client.html', {
         'client': client,
+        'pedidos': pedidos,
+        'pedidos_stats': pedidos_stats,
+        'pedidos_por_status': dict(pedidos_por_status.values_list('status', 'count')),
         'can_edit': can_edit,
         'can_delete': can_delete,
+        'can_create_pedido': can_create_pedido,
     })
 
 @login_required
