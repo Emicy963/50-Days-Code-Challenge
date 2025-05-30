@@ -203,3 +203,15 @@ class PedidoForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
             'prioridade': forms.Select(attrs={'class': 'form-control'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ordenar clientes por nome
+        self.fields['cliente'].queryset = Client.objects.all().order_by('name')
+        
+        # Definir labels e help_text personalizados
+        self.fields['cliente'].empty_label = "Selecione um cliente"
+        
+        # Tornar campos obrigatórios mais claros
+        for field_name, field in self.fields.items():
+            if field.required:
+                field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' required'
