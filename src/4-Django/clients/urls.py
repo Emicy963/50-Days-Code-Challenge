@@ -1,7 +1,5 @@
 from django.urls import path
 from . import views
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.get_clients, name='clients'),
@@ -10,4 +8,17 @@ urlpatterns = [
     path('delete_client/<int:id>/', views.delete_client, name='delete_client'),
     path('detail_client/<int:id>/', views.detail_client, name='detail_client'),
     path('bulk-delete/', views.bulk_delete_clients, name='bulk_delete_clients'),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # ==================== VIEWS PARA PEDIDOS ====================
+    path('pedidos/', views.get_pedidos, name='pedidos'),
+    path('pedidos/criar/', views.create_pedido, name='create_pedido'),
+    path('pedidos/<int:id>/', views.detail_pedido, name='detail_pedido'),
+    path('pedidos/<int:id>/editar/', views.update_pedido, name='update_pedido'),
+    path('pedidos/<int:id>/excluir/', views.delete_pedido, name='delete_pedido'),
+    path('pedidos/<int:id>/status/', views.update_pedido_status, name='update_pedido_status'),
+    path('pedidos/<int:id>/cancelar/', views.cancel_pedido, name='cancel_pedido'),
+    path('pedidos/acoes-lote/', views.bulk_actions_pedidos, name='bulk_actions_pedidos'),
+    path('pedidos/dashboard/', views.dashboard_pedidos, name='dashboard_pedidos'),  
+    # URLs AJAX
+    path('ajax/pedidos/<int:id>/status/', views.ajax_update_pedido_status, name='ajax_update_pedido_status'),
+    path('ajax/clientes/<int:client_id>/pedidos/', views.ajax_get_client_pedidos, name='ajax_get_client_pedidos'),
+]
