@@ -371,3 +371,40 @@ def create_pedido(request):
         form = PedidoForm()
     
     return render(request, 'create_pedido.html', {'form': form})
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def update_pedido(request, id):
+    """
+    Atualizar pedido existente
+    Apenas Administradores e Gerentes podem editar
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    if request.method == 'POST':
+        form = PedidoForm(request.POST, instance=pedido)
+        if form.is_valid():
+            try:
+                updated_pedido = form.save()
+                messages.success(
+                    request, 
+                    f'Pedido {updated_pedido.numero_pedido} atualizado com sucesso!'
+                )
+                return redirect('detail_pedido', id=updated_pedido.id)
+            except Exception as e:
+                messages.error(
+                    request, 
+                    f'Erro ao atualizar pedido: {str(e)}'
+                )
+        else:
+            messages.error(
+                request, 
+                'Por favor, corrija os erros abaixo.'
+            )
+    else:
+        form = PedidoForm(instance=pedido)
+    
+    return render(request, 'update_pedido.html', {
+        'form': form,
+        'pedido': pedido
+    })
