@@ -314,4 +314,23 @@ class PedidoSearchForm(forms.Form):
         }),
         label='Valor máximo'
     )
-    
+
+    def clean(self):
+        """
+        Validações cruzadas do formulário
+        """
+        cleaned_data = super().clean()
+        data_inicio = cleaned_data.get('data_inicio')
+        data_fim = cleaned_data.get('data_fim')
+        valor_min = cleaned_data.get('valor_min')
+        valor_max = cleaned_data.get('valor_max')
+
+        # Validar intervalo de datas
+        if data_inicio and data_fim and data_inicio > data_fim:
+            raise ValidationError('A data de início não pode ser posterior à data de fim.')
+
+        # Validar intervalo de valores
+        if valor_min is not None and valor_max is not None and valor_min > valor_max:
+            raise ValidationError('O valor mínimo não pode ser maior que o valor máximo.')
+
+        return cleaned_data
