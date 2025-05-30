@@ -408,3 +408,29 @@ def update_pedido(request, id):
         'form': form,
         'pedido': pedido
     })
+
+@login_required
+@group_required('Administradores')
+def delete_pedido(request, id):
+    """
+    Excluir pedido com confirmação
+    Apenas Administradores podem deletar
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    if request.method == 'POST':
+        numero_pedido = pedido.numero_pedido
+        try:
+            pedido.delete()
+            messages.success(
+                request, 
+                f'Pedido {numero_pedido} foi excluído com sucesso!'
+            )
+        except Exception as e:
+            messages.error(
+                request, 
+                f'Erro ao excluir pedido: {str(e)}'
+            )
+        return redirect('pedidos')
+    
+    return render(request, 'delete_pedido.html', {'pedido': pedido})
