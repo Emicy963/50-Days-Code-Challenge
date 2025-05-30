@@ -717,3 +717,187 @@ def ajax_get_client_pedidos(request, client_id):
         'pedidos': pedidos_data,
         'client_name': client.name
     })
+
+# ==================== VIEWS ADICIONAIS PARA INTEGRAÇÃO ====================
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def create_pedido_for_client(request, client_id):
+    """
+    Criar pedido para um cliente específico
+    Apenas Administradores e Gerentes podem criar
+    """
+    client = get_object_or_404(Client, id=client_id)
+    
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        if form.is_valid():
+            try:
+                pedido = form.save(commit=False)
+                pedido.cliente = client  # Definir o cliente automaticamente
+                pedido.save()
+                messages.success(
+                    request, 
+                    f'Pedido {pedido.numero_pedido} criado com sucesso para {client.name}!'
+                )
+                return redirect('detail_pedido', id=pedido.id)
+            except Exception as e:
+                messages.error(
+                    request, 
+                    f'Erro ao salvar pedido: {str(e)}'
+                )
+        else:
+            messages.error(
+                request, 
+                'Por favor, corrija os erros abaixo.'
+            )
+    else:
+        # Inicializar formulário com cliente pré-selecionado
+        form = PedidoForm(initial={'cliente': client})
+        # Desabilitar campo cliente para que não possa ser alterado
+        form.fields['cliente'].widget.attrs['readonly'] = True
+        form.fields['cliente'].disabled = True
+    
+    return render(request, 'create_pedido_for_client.html', {
+        'form': form,
+        'client': client
+    })
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def client_pedidos(request, client_id):
+    """
+    Listar todos os pedidos de um cliente específico
+    Todos os grupos podem visualizar
+    """
+    client = get_object_or_404(Client, id=client_id)
+    
+    # Filtros específicos para pedidos do cliente
+    status_filter = request.GET.get('status', '')
+    prioridade_filter = request.GET.get('prioridade', '')
+    
+    pedidos_list = client.pedidos.all().order_by('-data_pedido')
+    
+    if status_filter:
+        pedidos_list = pedidos_list.filter(status=status_filter)
+    
+    if prioridade_filter:
+        pedidos_list = pedidos_list.filter(prioridade=prioridade_filter)
+    
+    # Paginação
+    paginator = Paginator(pedidos_list, 10)
+    page_number = request.GET.get('page')
+    pedidos = paginator.get_page(page_number)
+    
+    # Estatísticas
+    stats = pedidos_list.aggregate(
+        total_pedidos=Count('id'),
+        valor_total=Sum('valor_total'),
+        valor_medio=Avg('valor_total')
+    )
+    
+    # Verificar permissões
+    user_groups = request.user.groups.values_list('name', flat=True)
+    can_create = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    
+    return render(request, 'client_pedidos.html', {
+        'client': client,
+        'pedidos': pedidos,
+        'stats': stats,
+        'status_choices': Pedido.STATUS_CHOICES,
+        'prioridade_choices': Pedido.PRIORIDADE_CHOICES,
+        'current_status': status_filter,
+        'current_prioridade': prioridade_filter,
+        'can_create': can_create,
+        'can_edit': can_edit,
+    })
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def reports_pedidos(request):
+    """
+    Relatórios e análises de pedidos
+    Todos os grupos podem visualizar
+    """
+    # Filtros de data para relatórios
+    data_inicio = request.GET.get('data_inicio', '')
+    data_fim = request.GET.get('data_fim', '')
+    
+    # Query base
+    pedidos = Pedido.objects.all()
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        try:
+            data_inicio_parsed = timezone.datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(data_pedido__date__gte=data_inicio_parsed)
+        except ValueError:
+            messages.error(request, 'Data de início inválida.')
+    
+    if data_fim:
+        try:
+            data_fim_parsed = timezone.datetime.strptime(data_fim, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(data_pedido__date__lte=data_fim_parsed)
+        except ValueError:
+            messages.error(request, 'Data de fim inválida.')
+    
+    # Estatísticas gerais
+    stats_gerais = pedidos.aggregate(
+        total_pedidos=Count('id'),
+        valor_total=Sum('valor_total'),
+        valor_medio=Avg('valor_total')
+    )
+    
+    # Pedidos por status
+    pedidos_por_status = pedidos.values('status').annotate(
+        count=Count('id'),
+        valor_total=Sum('valor_total')
+    ).order_by('status')
+    
+    # Pedidos por prioridade
+    pedidos_por_prioridade = pedidos.values('prioridade').annotate(
+        count=Count('id'),
+        valor_total=Sum('valor_total')
+    ).order_by('prioridade')
+    
+    # Top 10 clientes por valor
+    top_clientes_valor = Client.objects.annotate(
+        total_pedidos=Count('pedidos', filter=Q(pedidos__in=pedidos)),
+        valor_total=Sum('pedidos__valor_total', filter=Q(pedidos__in=pedidos))
+    ).filter(total_pedidos__gt=0).order_by('-valor_total')[:10]
+    
+    # Top 10 clientes por quantidade
+    top_clientes_quantidade = Client.objects.annotate(
+        total_pedidos=Count('pedidos', filter=Q(pedidos__in=pedidos))
+    ).filter(total_pedidos__gt=0).order_by('-total_pedidos')[:10]
+    
+    # Pedidos por mês (últimos 12 meses)
+    from django.db.models.functions import TruncMonth
+    pedidos_por_mes = pedidos.filter(
+        data_pedido__gte=timezone.now() - timezone.timedelta(days=365)
+    ).annotate(
+        mes=TruncMonth('data_pedido')
+    ).values('mes').annotate(
+        count=Count('id'),
+        valor_total=Sum('valor_total')
+    ).order_by('mes')
+    
+    # Pedidos atrasados
+    pedidos_atrasados = pedidos.filter(
+        data_entrega_prevista__lt=timezone.now().date(),
+        status__in=['pendente', 'processando', 'enviado']
+    )
+    
+    return render(request, 'reports_pedidos.html', {
+        'stats_gerais': stats_gerais,
+        'pedidos_por_status': pedidos_por_status,
+        'pedidos_por_prioridade': pedidos_por_prioridade,
+        'top_clientes_valor': top_clientes_valor,
+        'top_clientes_quantidade': top_clientes_quantidade,
+        'pedidos_por_mes': pedidos_por_mes,
+        'pedidos_atrasados': pedidos_atrasados,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'total_atrasados': pedidos_atrasados.count(),
+    })
