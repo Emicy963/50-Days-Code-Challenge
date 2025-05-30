@@ -355,3 +355,34 @@ class PedidoStatusForm(forms.Form):
         }),
         label='Observação'
     )
+
+class PedidoBulkActionForm(forms.Form):
+    """
+    Formulário para ações em lote
+    """
+    ACTION_CHOICES = [
+        ('', 'Selecione uma ação'),
+        ('update_status', 'Atualizar Status'),
+        ('update_priority', 'Atualizar Prioridade'),
+        ('delete', 'Excluir Pedidos'),
+    ]
+    
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Ação'
+    )
+    
+    new_status = forms.ChoiceField(
+        choices=Pedido.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Novo Status'
+    )
+    
+    new_priority = forms.ChoiceField(
+        choices=Pedido.PRIORIDADE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Nova Prioridade'
+    )
