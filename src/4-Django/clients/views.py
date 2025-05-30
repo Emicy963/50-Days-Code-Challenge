@@ -1,10 +1,11 @@
 from django.contrib.auth.models import Group
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from datetime import timezone
 from .models import Client, Pedido
 from .forms import (
@@ -633,4 +634,63 @@ def dashboard_pedidos(request):
         'pedidos_atrasados': pedidos_atrasados,
         'pedidos_mes_count': pedidos_mes.count(),
         'top_clientes': top_clientes,
+    })
+
+# ==================== AJAX VIEWS ====================
+
+@login_required
+@require_POST
+def ajax_update_pedido_status(request, id):
+    """
+    Atualizar status via AJAX para interface mais fluida
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    # Verificar permissões
+    user_groups = request.user.groups.values_list('name', flat=True)
+    if not (any(group in ['Administradores', 'Gerentes', 'Funcionários'] for group in user_groups) or request.user.is_superuser):
+        return JsonResponse({'success': False, 'message': 'Sem permissão'}, status=403)
+    
+    try:
+        novo_status = request.POST.get('status')
+        if novo_status not in dict(Pedido.STATUS_CHOICES):
+            return JsonResponse({'success': False, 'message': 'Status inválido'})
+        
+        pedido.status = novo_status
+        pedido.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Status atualizado para {pedido.get_status_display()}',
+            'new_status': novo_status,
+            'new_status_display': pedido.get_status_display(),
+            'status_class': pedido.status_display_class
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required
+def ajax_get_client_pedidos(request, client_id):
+    """
+    Obter pedidos de um cliente via AJAX
+    """
+    client = get_object_or_404(Client, id=client_id)
+    pedidos = client.pedidos.all().order_by('-data_pedido')[:10]  # Últimos 10 pedidos
+    
+    pedidos_data = []
+    for pedido in pedidos:
+        pedidos_data.append({
+            'id': pedido.id,
+            'numero_pedido': pedido.numero_pedido,
+            'status': pedido.get_status_display(),
+            'status_class': pedido.status_display_class,
+            'valor_total': str(pedido.valor_total),
+            'data_pedido': pedido.data_pedido.strftime('%d/%m/%Y'),
+            'url': pedido.get_absolute_url()
+        })
+    
+    return JsonResponse({
+        'pedidos': pedidos_data,
+        'client_name': client.name
     })
