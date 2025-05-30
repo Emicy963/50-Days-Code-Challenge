@@ -334,3 +334,24 @@ class PedidoSearchForm(forms.Form):
             raise ValidationError('O valor mínimo não pode ser maior que o valor máximo.')
 
         return cleaned_data
+    
+class PedidoStatusForm(forms.Form):
+    """
+    Formulário simples para atualização rápida de status
+    """
+    status = forms.ChoiceField(
+        choices=Pedido.STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Novo Status'
+    )
+    
+    observacao = forms.CharField(
+        max_length=500,
+        required=False,
+        widget=forms.Textarea(attrs={
+            'rows': 2,
+            'placeholder': 'Observação sobre a mudança de status (opcional)...',
+            'class': 'form-control'
+        }),
+        label='Observação'
+    )
