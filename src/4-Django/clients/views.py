@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
+from datetime import timezone
 from .models import Client, Pedido
-from .forms import ClientForm, ClientSearchForm, PedidoForm, PedidoSearchForm
+from .forms import ClientForm, ClientSearchForm, PedidoForm, PedidoSearchForm, PedidoStatusForm
 
 # Decorator personalizado para verificar grupos
 def group_required(*group_names):
@@ -455,4 +456,50 @@ def detail_pedido(request, id):
         'can_edit': can_edit,
         'can_delete': can_delete,
         'can_change_status': can_change_status,
+    })
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def update_pedido_status(request, id):
+    """
+    Atualizar apenas o status do pedido (formulário rápido)
+    Todos os grupos autenticados podem alterar status
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    if request.method == 'POST':
+        form = PedidoStatusForm(request.POST)
+        if form.is_valid():
+            try:
+                novo_status = form.cleaned_data['status']
+                observacao = form.cleaned_data.get('observacao', '')
+                
+                # Adicionar observação sobre mudança de status
+                if observacao:
+                    if pedido.observacoes:
+                        pedido.observacoes += f"\n\n[{timezone.now().strftime('%d/%m/%Y %H:%M')}] Status alterado para '{pedido.get_status_display()}': {observacao}"
+                    else:
+                        pedido.observacoes = f"[{timezone.now().strftime('%d/%m/%Y %H:%M')}] Status alterado para '{pedido.get_status_display()}': {observacao}"
+                
+                pedido.status = novo_status
+                pedido.save()
+                
+                messages.success(
+                    request, 
+                    f'Status do pedido {pedido.numero_pedido} atualizado para {pedido.get_status_display()}!'
+                )
+                return redirect('detail_pedido', id=pedido.id)
+            except Exception as e:
+                messages.error(
+                    request, 
+                    f'Erro ao atualizar status: {str(e)}'
+                )
+        else:
+            messages.error(request, 'Por favor, corrija os erros abaixo.')
+    else:
+        form = PedidoStatusForm(initial={'status': pedido.status})
+    
+    return render(request, 'update_pedido_status.html', {
+        'form': form,
+        'pedido': pedido
     })
