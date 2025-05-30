@@ -234,3 +234,84 @@ class PedidoForm(forms.ModelForm):
         if valor is not None and valor < 0:
             raise ValidationError('O valor total deve ser positivo.')
         return valor
+
+class PedidoSearchForm(forms.Form):
+    """
+    Formulário para busca e filtros de pedidos
+    """
+    search = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Buscar por número do pedido, cliente ou descrição...',
+            'class': 'form-control'
+        }),
+        label='Buscar'
+    )
+    
+    cliente = forms.ModelChoiceField(
+        queryset=Client.objects.all().order_by('name'),
+        required=False,
+        empty_label="Todos os clientes",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Cliente'
+    )
+    
+    status = forms.ChoiceField(
+        choices=[('', 'Todos os status')] + Pedido.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Status'
+    )
+    
+    prioridade = forms.ChoiceField(
+        choices=[('', 'Todas as prioridades')] + Pedido.PRIORIDADE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Prioridade'
+    )
+    
+    data_inicio = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        label='Data de início'
+    )
+    
+    data_fim = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        label='Data de fim'
+    )
+    
+    valor_min = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'min': '0',
+            'placeholder': '0.00',
+            'class': 'form-control'
+        }),
+        label='Valor mínimo'
+    )
+    
+    valor_max = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'min': '0',
+            'placeholder': '0.00',
+            'class': 'form-control'
+        }),
+        label='Valor máximo'
+    )
+    
