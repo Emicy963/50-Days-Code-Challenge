@@ -226,4 +226,11 @@ class PedidoForm(forms.ModelForm):
             raise ValidationError('A data de entrega prevista não pode ser no passado.')
         return data
 
-
+    def clean_valor_total(self):
+        """
+        Validar se o valor total é positivo
+        """
+        valor = self.cleaned_data.get('valor_total')
+        if valor is not None and valor < 0:
+            raise ValidationError('O valor total deve ser positivo.')
+        return valor
