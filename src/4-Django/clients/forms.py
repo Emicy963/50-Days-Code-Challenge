@@ -1,3 +1,4 @@
+from datetime import timezone
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import Client, Pedido
@@ -215,3 +216,14 @@ class PedidoForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field.required:
                 field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' required'
+    
+    def clean_data_entrega_prevista(self):
+        """
+        Validar se a data de entrega prevista não é no passado
+        """
+        data = self.cleaned_data.get('data_entrega_prevista')
+        if data and data < timezone.now().date():
+            raise ValidationError('A data de entrega prevista não pode ser no passado.')
+        return data
+
+
