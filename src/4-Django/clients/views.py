@@ -503,3 +503,33 @@ def update_pedido_status(request, id):
         'form': form,
         'pedido': pedido
     })
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def cancel_pedido(request, id):
+    """
+    Cancelar pedido com motivo
+    Apenas Administradores e Gerentes podem cancelar
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    if not pedido.can_be_cancelled():
+        messages.error(request, 'Este pedido não pode ser cancelado.')
+        return redirect('detail_pedido', id=pedido.id)
+    
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '').strip()
+        try:
+            pedido.cancel_order(motivo)
+            messages.success(
+                request, 
+                f'Pedido {pedido.numero_pedido} foi cancelado com sucesso!'
+            )
+            return redirect('detail_pedido', id=pedido.id)
+        except Exception as e:
+            messages.error(
+                request, 
+                f'Erro ao cancelar pedido: {str(e)}'
+            )
+    
+    return render(request, 'cancel_pedido.html', {'pedido': pedido})
