@@ -434,3 +434,25 @@ def delete_pedido(request, id):
         return redirect('pedidos')
     
     return render(request, 'delete_pedido.html', {'pedido': pedido})
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def detail_pedido(request, id):
+    """
+    Exibir detalhes de um pedido
+    Todos os grupos podem visualizar detalhes
+    """
+    pedido = get_object_or_404(Pedido, id=id)
+    
+    # Verificar permissões para mostrar botões na template
+    user_groups = request.user.groups.values_list('name', flat=True)
+    can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_delete = 'Administradores' in user_groups or request.user.is_superuser
+    can_change_status = any(group in ['Administradores', 'Gerentes', 'Funcionários'] for group in user_groups) or request.user.is_superuser
+    
+    return render(request, 'detail_pedido.html', {
+        'pedido': pedido,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+        'can_change_status': can_change_status,
+    })
