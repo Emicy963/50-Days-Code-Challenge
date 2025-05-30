@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Client
+from .models import Client, Pedido
 import re
 
 class ClientForm(forms.ModelForm):
@@ -170,3 +170,36 @@ class ClientSearchForm(forms.Form):
             raise ValidationError('Idade mínima não pode ser maior que idade máxima.')
         
         return cleaned_data
+
+class PedidoForm(forms.ModelForm):
+    """
+    Formulário para criação e edição de pedidos
+    """
+    class Meta:
+        model = Pedido
+        fields = [
+            'cliente', 'descricao', 'valor_total', 'status', 
+            'prioridade', 'data_entrega_prevista', 'observacoes'
+        ]
+        widgets = {
+            'descricao': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Descreva detalhadamente o pedido...'
+            }),
+            'data_entrega_prevista': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'observacoes': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Observações adicionais (opcional)...'
+            }),
+            'valor_total': forms.NumberInput(attrs={
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'prioridade': forms.Select(attrs={'class': 'form-control'}),
+        }
