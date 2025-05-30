@@ -594,3 +594,43 @@ def bulk_actions_pedidos(request):
             messages.error(request, 'Por favor, corrija os erros no formulário.')
     
     return redirect('pedidos')
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def dashboard_pedidos(request):
+    """
+    Dashboard com estatísticas de pedidos
+    Todos os grupos podem visualizar
+    """
+    # Estatísticas gerais
+    stats_gerais = Pedido.get_revenue_statistics()
+    stats_status = Pedido.get_status_statistics()
+    
+    # Pedidos por prioridade
+    stats_prioridade = Pedido.objects.values('prioridade').annotate(
+        count=Count('id')
+    ).order_by('prioridade')
+    
+    # Pedidos atrasados
+    pedidos_atrasados = Pedido.objects.filter(
+        data_entrega_prevista__lt=timezone.now().date(),
+        status__in=['pendente', 'processando', 'enviado']
+    ).count()
+    
+    # Pedidos do mês atual
+    inicio_mes = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    pedidos_mes = Pedido.objects.filter(data_pedido__gte=inicio_mes)
+    
+    # Top 5 clientes por quantidade de pedidos
+    top_clientes = Client.objects.annotate(
+        total_pedidos=Count('pedidos')
+    ).filter(total_pedidos__gt=0).order_by('-total_pedidos')[:5]
+    
+    return render(request, 'dashboard_pedidos.html', {
+        'stats_gerais': stats_gerais,
+        'stats_status': stats_status,
+        'stats_prioridade': dict(stats_prioridade.values_list('prioridade', 'count')),
+        'pedidos_atrasados': pedidos_atrasados,
+        'pedidos_mes_count': pedidos_mes.count(),
+        'top_clientes': top_clientes,
+    })
