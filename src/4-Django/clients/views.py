@@ -7,7 +7,13 @@ from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
 from datetime import timezone
 from .models import Client, Pedido
-from .forms import ClientForm, ClientSearchForm, PedidoForm, PedidoSearchForm, PedidoStatusForm
+from .forms import (
+    ClientForm, 
+    ClientSearchForm, 
+    PedidoForm, 
+    PedidoSearchForm, 
+    PedidoStatusForm,
+    PedidoBulkActionForm)
 
 # Decorator personalizado para verificar grupos
 def group_required(*group_names):
@@ -533,3 +539,58 @@ def cancel_pedido(request, id):
             )
     
     return render(request, 'cancel_pedido.html', {'pedido': pedido})
+
+@login_required
+@group_required('Administradores')
+def bulk_actions_pedidos(request):
+    """
+    Ações em lote para pedidos
+    Apenas Administradores podem fazer ações em lote
+    """
+    if request.method == 'POST':
+        form = PedidoBulkActionForm(request.POST)
+        pedido_ids = request.POST.getlist('pedido_ids[]')
+        
+        if not pedido_ids:
+            messages.warning(request, 'Nenhum pedido selecionado.')
+            return redirect('pedidos')
+        
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            
+            try:
+                pedidos = Pedido.objects.filter(id__in=pedido_ids)
+                count = pedidos.count()
+                
+                if action == 'update_status':
+                    new_status = form.cleaned_data['new_status']
+                    pedidos.update(status=new_status)
+                    messages.success(
+                        request, 
+                        f'{count} pedido(s) tiveram o status atualizado para {dict(Pedido.STATUS_CHOICES)[new_status]}!'
+                    )
+                
+                elif action == 'update_priority':
+                    new_priority = form.cleaned_data['new_priority']
+                    pedidos.update(prioridade=new_priority)
+                    messages.success(
+                        request, 
+                        f'{count} pedido(s) tiveram a prioridade atualizada para {dict(Pedido.PRIORIDADE_CHOICES)[new_priority]}!'
+                    )
+                
+                elif action == 'delete':
+                    pedidos.delete()
+                    messages.success(
+                        request, 
+                        f'{count} pedido(s) excluído(s) com sucesso!'
+                    )
+                
+            except Exception as e:
+                messages.error(
+                    request, 
+                    f'Erro ao executar ação em lote: {str(e)}'
+                )
+        else:
+            messages.error(request, 'Por favor, corrija os erros no formulário.')
+    
+    return redirect('pedidos')
