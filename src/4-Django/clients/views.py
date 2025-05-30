@@ -3,10 +3,10 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
-from .models import Client
-from .forms import ClientForm, ClientSearchForm
+from .models import Client, Pedido
+from .forms import ClientForm, ClientSearchForm, PedidoForm, PedidoSearchForm
 
 # Decorator personalizado para verificar grupos
 def group_required(*group_names):
@@ -252,4 +252,90 @@ def manage_users(request):
     return render(request, 'manage_users.html', {
         'users': users,
         'groups': groups,
+    })
+
+# ==================== VIEWS PARA PEDIDOS ====================
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def get_pedidos(request):
+    """
+    Listar pedidos com busca avançada e paginação
+    Todos os grupos autenticados podem visualizar
+    """
+    search_form = PedidoSearchForm(request.GET)
+    pedidos_list = Pedido.objects.select_related('cliente').order_by('-data_pedido')
+    
+    # Aplicar filtros de busca se o formulário for válido
+    if search_form.is_valid():
+        search_query = search_form.cleaned_data.get('search')
+        cliente = search_form.cleaned_data.get('cliente')
+        status = search_form.cleaned_data.get('status')
+        prioridade = search_form.cleaned_data.get('prioridade')
+        data_inicio = search_form.cleaned_data.get('data_inicio')
+        data_fim = search_form.cleaned_data.get('data_fim')
+        valor_min = search_form.cleaned_data.get('valor_min')
+        valor_max = search_form.cleaned_data.get('valor_max')
+        
+        # Filtro de busca textual
+        if search_query:
+            pedidos_list = pedidos_list.filter(
+                Q(numero_pedido__icontains=search_query) | 
+                Q(cliente__name__icontains=search_query) |
+                Q(descricao__icontains=search_query)
+            )
+        
+        # Filtro por cliente
+        if cliente:
+            pedidos_list = pedidos_list.filter(cliente=cliente)
+        
+        # Filtro por status
+        if status:
+            pedidos_list = pedidos_list.filter(status=status)
+        
+        # Filtro por prioridade
+        if prioridade:
+            pedidos_list = pedidos_list.filter(prioridade=prioridade)
+        
+        # Filtro por intervalo de datas
+        if data_inicio:
+            pedidos_list = pedidos_list.filter(data_pedido__date__gte=data_inicio)
+        
+        if data_fim:
+            pedidos_list = pedidos_list.filter(data_pedido__date__lte=data_fim)
+        
+        # Filtro por intervalo de valores
+        if valor_min is not None:
+            pedidos_list = pedidos_list.filter(valor_total__gte=valor_min)
+        
+        if valor_max is not None:
+            pedidos_list = pedidos_list.filter(valor_total__lte=valor_max)
+    
+    # Calcular estatísticas dos resultados filtrados
+    stats = pedidos_list.aggregate(
+        total_pedidos=Count('id'),
+        valor_total=Sum('valor_total'),
+        valor_medio=Avg('valor_total')
+    )
+    
+    # Configurar paginação
+    paginator = Paginator(pedidos_list, 15)  # 15 pedidos por página
+    page_number = request.GET.get('page')
+    pedidos = paginator.get_page(page_number)
+    
+    # Verificar permissões para mostrar botões na template
+    user_groups = request.user.groups.values_list('name', flat=True)
+    can_create = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_edit = any(group in ['Administradores', 'Gerentes'] for group in user_groups) or request.user.is_superuser
+    can_delete = 'Administradores' in user_groups or request.user.is_superuser
+    can_bulk_actions = 'Administradores' in user_groups or request.user.is_superuser
+    
+    return render(request, 'pedidos.html', {
+        'pedidos': pedidos,
+        'search_form': search_form,
+        'stats': stats,
+        'can_create': can_create,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+        'can_bulk_actions': can_bulk_actions,
     })
