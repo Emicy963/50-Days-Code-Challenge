@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Novo Pedido{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <div class="flex items-center mb-6">
+        <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-800">Criar Novo Pedido</h2>
+    </div>
+    
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                <div class="flex">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            <p class="text-red-700">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Cliente -->
+            <div class="md:col-span-2">
+                <label for="{{ form.cliente.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Cliente *
+                </label>
+                {{ form.cliente }}
+                {% if form.cliente.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.cliente.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Número do Pedido -->
+            <div>
+                <label for="{{ form.numero_pedido.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Número do Pedido *
+                </label>
+                {{ form.numero_pedido }}
+                {% if form.numero_pedido.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.numero_pedido.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Se deixar em branco, será gerado automaticamente</p>
+            </div>
+            
+            <!-- Valor Total -->
+            <div>
+                <label for="{{ form.valor_total.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Valor Total (R$) *
+                </label>
+                {{ form.valor_total }}
+                {% if form.valor_total.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.valor_total.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Data de Entrega Prevista -->
+            <div>
+                <label for="{{ form.data_entrega_prevista.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Data de Entrega Prevista *
+                </label>
+                {{ form.data_entrega_prevista }}
+                {% if form.data_entrega_prevista.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.data_entrega_prevista.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Prioridade -->
+            <div>
+                <label for="{{ form.prioridade.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Prioridade
+                </label>
+                {{ form.prioridade }}
+                {% if form.prioridade.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.prioridade.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Descrição -->
+        <div>
+            <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Descrição do Pedido
+            </label>
+            {{ form.descricao }}
+            {% if form.descricao.errors %}
+                <div class="mt-1 text-sm text-red-600">
+                    {% for error in form.descricao.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">Descreva os detalhes do pedido</p>
+        </div>
+        
+        <!-- Observações -->
+        <div>
+            <label for="{{ form.observacoes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Observações
+            </label>
+            {{ form.observacoes }}
+            {% if form.observacoes.errors %}
+                <div class="mt-1 text-sm text-red-600">
+                    {% for error in form.observacoes.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">Observações adicionais sobre o pedido</p>
+        </div>
+        
+        <div class="flex justify-between pt-6 border-t border-gray-200">
+            <a href="{% url 'pedidos' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Cancelar
+            </a>
+            
+            <button type="submit" 
+                    class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Criar Pedido
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Estilos para os campos do formulário */
+    input[type="text"], input[type="email"], input[type="number"], input[type="date"], 
+    select, textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #1f2937;
+        background-color: #ffffff;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus, 
+    input[type="date"]:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    input.is-invalid, select.is-invalid, textarea.is-invalid {
+        border-color: #ef4444 !important;
+    }
+</style>
+{% endblock %}

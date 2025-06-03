@@ -24,6 +24,11 @@ urlpatterns = [
     path('clientes/<int:client_id>/pedidos/', views.client_pedidos, name='client_pedidos'),
     path('clientes/<int:client_id>/pedidos/criar/', views.create_pedido_for_client, name='create_pedido_for_client'),
 
+    # URLs para relatórios PDF
+    path('cliente/<int:client_id>/pdf/', views.client_pdf_report, name='client_pdf_report'),
+    path('pedidos/pdf/', views.pedidos_pdf_report, name='pedidos_pdf_report'),
+    path('dashboard/pdf/', views.dashboard_pdf_report, name='dashboard_pdf_report'),
+
     # URLs AJAX
     path('ajax/pedidos/<int:id>/status/', views.ajax_update_pedido_status, name='ajax_update_pedido_status'),
     path('ajax/clientes/<int:client_id>/pedidos/', views.ajax_get_client_pedidos, name='ajax_get_client_pedidos'),
