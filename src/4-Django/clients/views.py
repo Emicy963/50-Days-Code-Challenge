@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -15,6 +15,15 @@ from .forms import (
     PedidoSearchForm, 
     PedidoStatusForm,
     PedidoBulkActionForm)
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from io import BytesIO
+import datetime
 
 # Decorator personalizado para verificar grupos
 def group_required(*group_names):
@@ -901,3 +910,132 @@ def reports_pedidos(request):
         'data_fim': data_fim,
         'total_atrasados': pedidos_atrasados.count(),
     })
+
+# ==================== VIEWS PARA RELATÓRIOS PDF ====================
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def client_pdf_report(request, client_id):
+    """
+    Gerar relatório PDF de um cliente específico
+    """
+    client = get_object_or_404(Client, id=client_id)
+    
+    # Criar o HttpResponse object com PDF headers
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="cliente_{client.name}_{datetime.date.today()}.pdf"'
+    
+    # Criar o PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    # Título
+    title = Paragraph(f"Relatório do Cliente: {client.name}", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 12))
+    
+    # Informações do cliente
+    client_data = [
+        ['Nome:', client.name],
+        ['Email:', client.email],
+        ['Idade:', f'{client.age} anos'],
+        ['Data do Relatório:', datetime.date.today().strftime('%d/%m/%Y')]
+    ]
+    
+    client_table = Table(client_data, colWidths=[2*inch, 4*inch])
+    client_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.grey),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+        ('BACKGROUND', (1, 0), (1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(client_table)
+    elements.append(Spacer(1, 30))
+    
+    # Estatísticas dos pedidos
+    pedidos_stats = client.pedidos.aggregate(
+        total_pedidos=Count('id'),
+        valor_total=Sum('valor_total'),
+        valor_medio=Avg('valor_total')
+    )
+    
+    stats_title = Paragraph("Estatísticas de Pedidos", styles['Heading2'])
+    elements.append(stats_title)
+    elements.append(Spacer(1, 12))
+    
+    stats_data = [
+        ['Total de Pedidos:', str(pedidos_stats['total_pedidos'] or 0)],
+        ['Valor Total:', f"R$ {pedidos_stats['valor_total'] or 0:.2f}"],
+        ['Valor Médio:', f"R$ {pedidos_stats['valor_medio'] or 0:.2f}"]
+    ]
+    
+    stats_table = Table(stats_data, colWidths=[2*inch, 2*inch])
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(stats_table)
+    elements.append(Spacer(1, 30))
+    
+    # Lista de pedidos recentes (últimos 10)
+    pedidos_recentes = client.pedidos.all().order_by('-data_pedido')[:10]
+    
+    if pedidos_recentes:
+        pedidos_title = Paragraph("Pedidos Recentes", styles['Heading2'])
+        elements.append(pedidos_title)
+        elements.append(Spacer(1, 12))
+        
+        pedidos_data = [['Número', 'Data', 'Status', 'Valor']]
+        
+        for pedido in pedidos_recentes:
+            pedidos_data.append([
+                pedido.numero_pedido,
+                pedido.data_pedido.strftime('%d/%m/%Y'),
+                pedido.get_status_display(),
+                f"R$ {pedido.valor_total:.2f}"
+            ])
+        
+        pedidos_table = Table(pedidos_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        pedidos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(pedidos_table)
+    
+    # Construir o PDF
+    doc.build(elements)
+    
+    # Obter o valor do buffer e escrever na response
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response   
