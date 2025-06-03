@@ -1199,3 +1199,128 @@ def pedidos_pdf_report(request):
     response.write(pdf)
     
     return response
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def dashboard_pdf_report(request):
+    """
+    Gerar relatório PDF do dashboard com estatísticas gerais
+    """
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="dashboard_relatorio_{datetime.date.today()}.pdf"'
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=20,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    # Título
+    title = Paragraph("Relatório Dashboard - Visão Geral", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 20))
+    
+    # Estatísticas gerais de pedidos
+    stats_gerais = Pedido.get_revenue_statistics()
+    stats_status = Pedido.get_status_statistics()
+    
+    # Seção de estatísticas gerais
+    stats_title = Paragraph("Estatísticas Gerais", styles['Heading2'])
+    elements.append(stats_title)
+    elements.append(Spacer(1, 12))
+    
+    stats_data = [
+        ['Total de Pedidos:', str(stats_gerais.get('total_pedidos', 0))],
+        ['Receita Total:', f"R$ {stats_gerais.get('receita_total', 0):.2f}"],
+        ['Ticket Médio:', f"R$ {stats_gerais.get('ticket_medio', 0):.2f}"],
+        ['Total de Clientes:', str(Client.objects.count())],
+        ['Data do Relatório:', datetime.date.today().strftime('%d/%m/%Y')]
+    ]
+    
+    stats_table = Table(stats_data, colWidths=[2.5*inch, 2.5*inch])
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(stats_table)
+    elements.append(Spacer(1, 30))
+    
+    # Pedidos por status
+    status_title = Paragraph("Pedidos por Status", styles['Heading2'])
+    elements.append(status_title)
+    elements.append(Spacer(1, 12))
+    
+    status_data = [['Status', 'Quantidade']]
+    for status_info in stats_status:
+        status_data.append([
+            status_info['status_display'],
+            str(status_info['count'])
+        ])
+    
+    status_table = Table(status_data, colWidths=[2*inch, 1.5*inch])
+    status_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(status_table)
+    elements.append(Spacer(1, 30))
+    
+    # Top 5 clientes
+    top_clientes = Client.objects.annotate(
+        total_pedidos=Count('pedidos')
+    ).filter(total_pedidos__gt=0).order_by('-total_pedidos')[:5]
+    
+    if top_clientes:
+        clientes_title = Paragraph("Top 5 Clientes (Por Quantidade de Pedidos)", styles['Heading2'])
+        elements.append(clientes_title)
+        elements.append(Spacer(1, 12))
+        
+        clientes_data = [['Cliente', 'Total de Pedidos']]
+        for cliente in top_clientes:
+            clientes_data.append([
+                cliente.name,
+                str(cliente.total_pedidos)
+            ])
+        
+        clientes_table = Table(clientes_data, colWidths=[3*inch, 1.5*inch])
+        clientes_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(clientes_table)
+    
+    # Construir o PDF
+    doc.build(elements)
+    
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response
