@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancelar Pedido - {{ pedido.numero_pedido }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto">
+    <div class="text-center mb-6">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Cancelar Pedido</h2>
+        <p class="text-gray-600">Tem certeza que deseja cancelar o pedido <strong>{{ pedido.numero_pedido }}</strong>?</p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <h3 class="font-semibold text-gray-700 mb-2">Detalhes do Pedido</h3>
+        <div class="space-y-2 text-sm">
+            <p><strong>Cliente:</strong> {{ pedido.cliente.name }}</p>
+            <p><strong>Valor Total:</strong> R$ {{ pedido.valor_total|floatformat:2 }}</p>
+            <p><strong>Status Atual:</strong> {{ pedido.get_status_display }}</p>
+            <p><strong>Data do Pedido:</strong> {{ pedido.data_pedido|date:'d/m/Y H:i' }}</p>
+        </div>
+    </div>
+    
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">
+                Motivo do Cancelamento
+            </label>
+            <textarea name="motivo" id="motivo" rows="4" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      placeholder="Informe o motivo do cancelamento..."></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'detail_pedido' pedido.id %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200">
+                Voltar
+            </a>
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                Confirmar Cancelamento
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
