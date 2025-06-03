@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Pedido - {{ pedido.numero_pedido }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-lg mx-auto">
+    <div class="text-center mb-6">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Confirmar Exclusão</h2>
+        <p class="text-gray-600">Esta ação não pode ser desfeita.</p>
+    </div>
+
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <h3 class="text-lg font-semibold text-red-800 mb-3">Detalhes do Pedido a ser Excluído:</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="font-medium text-red-700">Número do Pedido:</span>
+                <span class="text-red-900">{{ pedido.numero_pedido }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-medium text-red-700">Cliente:</span>
+                <span class="text-red-900">{{ pedido.cliente.name }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-medium text-red-700">Status:</span>
+                <span class="text-red-900">{{ pedido.get_status_display }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-medium text-red-700">Valor Total:</span>
+                <span class="text-red-900">R$ {{ pedido.valor_total|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-medium text-red-700">Data do Pedido:</span>
+                <span class="text-red-900">{{ pedido.data_pedido|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if pedido.data_entrega_prevista %}
+                <div class="flex justify-between">
+                    <span class="font-medium text-red-700">Entrega Prevista:</span>
+                    <span class="text-red-900">{{ pedido.data_entrega_prevista|date:"d/m/Y" }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if pedido.descricao %}
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <h4 class="font-medium text-gray-700 mb-2">Descrição do Pedido:</h4>
+            <p class="text-sm text-gray-600">{{ pedido.descricao|truncatewords:20 }}</p>
+        </div>
+    {% endif %}
+
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+                <h4 class="text-yellow-800 font-medium">Atenção!</h4>
+                <p class="text-sm text-yellow-700 mt-1">
+                    Ao excluir este pedido, todos os dados relacionados serão perdidos permanentemente. 
+                    Esta ação não pode ser desfeita.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'detail_pedido' pedido.id %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200"
+                    onclick="return confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Confirmar Exclusão
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
