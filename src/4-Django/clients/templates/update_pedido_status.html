@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Alterar Status - {{ pedido.numero_pedido }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-lg mx-auto">
+    <div class="text-center mb-6">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Alterar Status do Pedido</h2>
+        <p class="text-gray-600">Atualize o status do pedido rapidamente</p>
+    </div>
+
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Informações do Pedido:</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+                <span class="font-medium text-gray-600">Número:</span>
+                <p class="text-gray-900">{{ pedido.numero_pedido }}</p>
+            </div>
+            <div>
+                <span class="font-medium text-gray-600">Cliente:</span>
+                <p class="text-gray-900">{{ pedido.cliente.name }}</p>
+            </div>
+            <div>
+                <span class="font-medium text-gray-600">Status Atual:</span>
+                <p class="text-gray-900">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {% if pedido.status == 'pendente' %}bg-yellow-100 text-yellow-800
+                        {% elif pedido.status == 'processando' %}bg-blue-100 text-blue-800
+                        {% elif pedido.status == 'enviado' %}bg-purple-100 text-purple-800
+                        {% elif pedido.status == 'entregue' %}bg-green-100 text-green-800
+                        {% elif pedido.status == 'cancelado' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ pedido.get_status_display }}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <span class="font-medium text-gray-600">Valor:</span>
+                <p class="text-gray-900">R$ {{ pedido.valor_total|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center mb-2">
+                    <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-red-800 font-medium">Corrija os erros abaixo:</h3>
+                </div>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p class="text-sm text-red-600 ml-7">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div>
+            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Novo Status
+                <span class="text-red-500">*</span>
+            </label>
+            {{ form.status }}
+            {% if form.status.help_text %}
+                <p class="text-xs text-gray-500 mt-1">{{ form.status.help_text }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.observacao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Observação sobre a mudança (opcional)
+            </label>
+            {{ form.observacao }}
+            <p class="text-xs text-gray-500 mt-1">Adicione uma observação sobre o motivo da alteração de status.</p>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h4 class="text-blue-800 font-medium">Dica</h4>
+                    <p class="text-sm text-blue-700 mt-1">
+                        A observação será adicionada ao histórico do pedido com data e hora da alteração.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+            <a href="{% url 'detail_pedido' pedido.id %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Atualizar Status
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+    }
+    
+    select.form-control {
+        @apply appearance-none bg-white;
+    }
+    
+    textarea.form-control {
+        @apply resize-vertical min-h-[80px];
+    }
+</style>
+{% endblock %}
