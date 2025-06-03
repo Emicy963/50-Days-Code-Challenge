@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+        {% block title %}Gerenciar Pedidos{% endblock %}
+        {% block content %}
+        <div class="container mx-auto px-4 py-6">
+            <!-- Header com estatísticas -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Gerenciar Pedidos</h1>
+                    {% if can_create %}
+                        <a href="{% url 'create_pedido' %}" 
+                           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Novo Pedido
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Cards de estatísticas -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total de Pedidos</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ stats.total_pedidos|default:0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Valor Total</p>
+                                <p class="text-2xl font-bold text-gray-900">R$ {{ stats.valor_total|default:0|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-yellow-100 rounded-lg">
+                                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Valor Médio</p>
+                                <p class="text-2xl font-bold text-gray-900">R$ {{ stats.valor_medio|default:0|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-purple-100 rounded-lg">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Dashboard</p>
+                                <a href="{% url 'dashboard_pedidos' %}" class="text-purple-600 hover:text-purple-800 font-medium">Ver Relatórios</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulário de busca -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Filtros de Busca</h3>
+                <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                        {{ search_form.search }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                        {{ search_form.cliente }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        {{ search_form.status }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                        {{ search_form.prioridade }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                        {{ search_form.data_inicio }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                        {{ search_form.data_fim }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Valor Mín</label>
+                        {{ search_form.valor_min }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Valor Máx</label>
+                        {{ search_form.valor_max }}
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-4 flex space-x-2">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Buscar
+                        </button>
+                        <a href="{% url 'pedidos' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            Limpar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Ações em lote -->
+            {% if can_bulk_actions %}
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <form id="bulk-form" method="post" action="{% url 'bulk_actions_pedidos' %}">
+                    {% csrf_token %}
+                    <div class="flex items-center space-x-4">
+                        <label class="text-sm font-medium text-gray-700">Ações em lote:</label>
+                        <select name="action" class="form-select rounded-md border-gray-300">
+                            <option value="">Selecione uma ação</option>
+                            <option value="update_status">Atualizar Status</option>
+                            <option value="update_priority">Atualizar Prioridade</option>
+                            <option value="delete">Excluir Selecionados</option>
+                        </select>
+                        <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            Executar
+                        </button>
+                        <span class="text-sm text-gray-500" id="selected-count">0 selecionados</span>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Lista de pedidos -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                {% if can_bulk_actions %}
+                                <th class="px-6 py-3 text-left">
+                                    <input type="checkbox" id="select-all" class="form-checkbox h-4 w-4 text-blue-600">
+                                </th>
+                                {% endif %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridade</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for pedido in pedidos %}
+                            <tr class="hover:bg-gray-50">
+                                {% if can_bulk_actions %}
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" name="pedido_ids[]" value="{{ pedido.id }}" class="form-checkbox h-4 w-4 text-blue-600 pedido-checkbox">
+                                </td>
+                                {% endif %}
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ pedido.numero_pedido }}</div>
+                                    <div class="text-sm text-gray-500">{{ pedido.descricao|truncatechars:30 }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ pedido.cliente.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ pedido.cliente.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                        {% if pedido.status == 'pendente' %}bg-yellow-100 text-yellow-800
+                                        {% elif pedido.status == 'processando' %}bg-blue-100 text-blue-800
+                                        {% elif pedido.status == 'enviado' %}bg-purple-100 text-purple-800
+                                        {% elif pedido.status == 'entregue' %}bg-green-100 text-green-800
+                                        {% elif pedido.status == 'cancelado' %}bg-red-100 text-red-800
+                                        {% endif %}">
+                                        {{ pedido.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        {% if pedido.prioridade == 'alta' %}bg-red-100 text-red-800
+                                        {% elif pedido.prioridade == 'media' %}bg-yellow-100 text-yellow-800
+                                        {% elif pedido.prioridade == 'baixa' %}bg-green-100 text-green-800
+                                        {% endif %}">
+                                        {{ pedido.get_prioridade_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    R$ {{ pedido.valor_total|floatformat:2 }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ pedido.data_pedido|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <a href="{% url 'detail_pedido' pedido.id %}" class="text-blue-600 hover:text-blue-900">Ver</a>
+                                    {% if can_edit %}
+                                        <a href="{% url 'update_pedido' pedido.id %}" class="text-green-600 hover:text-green-900">Editar</a>
+                                    {% endif %}
+                                    {% if can_delete %}
+                                        <a href="{% url 'delete_pedido' pedido.id %}" class="text-red-600 hover:text-red-900" onclick="return confirm('Confirma exclusão?')">Excluir</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                    Nenhum pedido encontrado.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if pedidos.has_other_pages %}
+                <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            {% if pedidos.has_previous %}
+                                <a href="?page={{ pedidos.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Anterior</a>
+                            {% endif %}
+                            {% if pedidos.has_next %}
+                                <a href="?page={{ pedidos.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Próximo</a>
+                            {% endif %}
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Mostrando <span class="font-medium">{{ pedidos.start_index }}</span> a <span class="font-medium">{{ pedidos.end_index }}</span> de <span class="font-medium">{{ pedidos.paginator.count }}</span> resultados
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                    {% if pedidos.has_previous %}
+                                        <a href="?page=1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Primeira</a>
+                                        <a href="?page={{ pedidos.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Anterior</a>
+                                    {% endif %}
+                                    
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                        Página {{ pedidos.number }} de {{ pedidos.paginator.num_pages }}
+                                    </span>
+                                    
+                                    {% if pedidos.has_next %}
+                                        <a href="?page={{ pedidos.next_page_number }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Próximo</a>
+                                        <a href="?page={{ pedidos.paginator.num_pages }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Última</a>
+                                    {% endif %}
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <script>
+            // JavaScript para ações em lote
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectAll = document.getElementById('select-all');
+                const checkboxes = document.querySelectorAll('.pedido-checkbox');
+                const selectedCount = document.getElementById('selected-count');
+                
+                function updateSelectedCount() {
+                    const checked = document.querySelectorAll('.pedido-checkbox:checked').length;
+                    selectedCount.textContent = checked + ' selecionados';
+                }
+                
+                if (selectAll) {
+                    selectAll.addEventListener('change', function() {
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                        updateSelectedCount();
+                    });
+                }
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSelectedCount);
+                });
+            });
+        </script>
+        {% endblock %}
