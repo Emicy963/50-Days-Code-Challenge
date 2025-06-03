@@ -67,8 +67,8 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 ### 🔸 Relacionamentos e Funcionalidades Extras
 
 36. Criar modelo `Pedido` relacionado ao `Cliente` ✅
-37. Filtros na listagem de pedidos (cliente, data, valor) 🔲
-38. Gerar relatórios PDF 🔲
+37. Filtros na listagem de pedidos (cliente, data, valor) ✅
+38. Gerar relatórios PDF ✅
 39. Usar API externa (ex: ViaCEP) para preencher endereço 🔲
 40. Exportar dados em CSV 🔲
 
