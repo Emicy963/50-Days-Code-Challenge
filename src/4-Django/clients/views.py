@@ -1567,3 +1567,53 @@ def export_pedidos_csv(request):
         ])
     
     return response
+
+@login_required
+@group_required('Administradores', 'Gerentes')
+def export_dashboard_csv(request):
+    """
+    Exportar dados do dashboard para CSV
+    """
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="dashboard_{datetime.date.today()}.csv"'
+    
+    response.write('\ufeff')
+    writer = csv.writer(response, delimiter=';')
+    
+    # Estatísticas gerais
+    stats_gerais = Pedido.get_revenue_statistics()
+    stats_status = Pedido.get_status_statistics()
+    
+    # Seção 1: Estatísticas Gerais
+    writer.writerow(['=== ESTATÍSTICAS GERAIS ==='])
+    writer.writerow(['Métrica', 'Valor'])
+    writer.writerow(['Total de Pedidos', stats_gerais.get('total_pedidos', 0)])
+    writer.writerow(['Receita Total', f"R$ {stats_gerais.get('receita_total', 0):.2f}".replace('.', ',')])
+    writer.writerow(['Ticket Médio', f"R$ {stats_gerais.get('ticket_medio', 0):.2f}".replace('.', ',')])
+    writer.writerow(['Total de Clientes', Client.objects.count()])
+    writer.writerow(['Data do Relatório', datetime.date.today().strftime('%d/%m/%Y')])
+    writer.writerow([])  # Linha em branco
+    
+    # Seção 2: Pedidos por Status
+    writer.writerow(['=== PEDIDOS POR STATUS ==='])
+    writer.writerow(['Status', 'Quantidade'])
+    for status_info in stats_status:
+        writer.writerow([status_info['status_display'], status_info['count']])
+    writer.writerow([])
+    
+    # Seção 3: Top Clientes
+    top_clientes = Client.objects.annotate(
+        total_pedidos=Count('pedidos'),
+        valor_total=Sum('pedidos__valor_total')
+    ).filter(total_pedidos__gt=0).order_by('-total_pedidos')[:10]
+    
+    writer.writerow(['=== TOP 10 CLIENTES ==='])
+    writer.writerow(['Cliente', 'Total de Pedidos', 'Valor Total'])
+    for cliente in top_clientes:
+        writer.writerow([
+            cliente.name,
+            cliente.total_pedidos,
+            f"{cliente.valor_total or 0:.2f}".replace('.', ',')
+        ])
+    
+    return response
