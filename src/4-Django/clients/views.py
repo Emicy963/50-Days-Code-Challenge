@@ -1324,3 +1324,87 @@ def dashboard_pdf_report(request):
     response.write(pdf)
     
     return response
+
+
+# ==================== INTEGRAÇÃO COM API VIACEP ====================
+
+import requests
+import csv
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@login_required
+@csrf_exempt
+def get_address_by_cep(request):
+    """
+    Buscar endereço via API ViaCEP
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            cep = data.get('cep', '').replace('-', '').replace(' ', '')
+            
+            if not cep or len(cep) != 8:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'CEP deve ter 8 dígitos'
+                })
+            
+            # Fazer requisição para a API ViaCEP
+            response = requests.get(
+                f'https://viacep.com.br/ws/{cep}/json/',
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                address_data = response.json()
+                
+                # Verificar se o CEP foi encontrado
+                if 'erro' in address_data:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'CEP não encontrado'
+                    })
+                
+                return JsonResponse({
+                    'success': True,
+                    'data': {
+                        'logradouro': address_data.get('logradouro', ''),
+                        'bairro': address_data.get('bairro', ''),
+                        'cidade': address_data.get('localidade', ''),
+                        'uf': address_data.get('uf', ''),
+                        'cep': address_data.get('cep', ''),
+                        'complemento': address_data.get('complemento', ''),
+                        'ibge': address_data.get('ibge', ''),
+                        'gia': address_data.get('gia', ''),
+                        'ddd': address_data.get('ddd', ''),
+                        'siafi': address_data.get('siafi', '')
+                    }
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro ao consultar CEP'
+                })
+                
+        except requests.RequestException as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Erro de conexão: {str(e)}'
+            })
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Dados inválidos'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Erro interno: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Método não permitido'
+    })
