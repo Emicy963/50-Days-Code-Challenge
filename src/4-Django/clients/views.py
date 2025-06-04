@@ -1408,3 +1408,72 @@ def get_address_by_cep(request):
         'success': False,
         'message': 'Método não permitido'
     })
+
+# ==================== EXPORTAÇÃO CSV ====================
+
+@login_required
+@group_required('Administradores', 'Gerentes', 'Funcionários')
+def export_clients_csv(request):
+    """
+    Exportar lista de clientes para CSV
+    """
+    # Aplicar os mesmos filtros da view get_clients
+    search_form = ClientSearchForm(request.GET)
+    clients_list = Client.objects.all().order_by('name')
+    
+    if search_form.is_valid():
+        search_query = search_form.cleaned_data.get('search')
+        age_min = search_form.cleaned_data.get('age_min')
+        age_max = search_form.cleaned_data.get('age_max')
+        
+        if search_query:
+            clients_list = clients_list.filter(
+                Q(name__icontains=search_query) | 
+                Q(email__icontains=search_query)
+            )
+        
+        if age_min:
+            clients_list = clients_list.filter(age__gte=age_min)
+        
+        if age_max:
+            clients_list = clients_list.filter(age__lte=age_max)
+    
+    # Criar resposta CSV
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="clientes_{datetime.date.today()}.csv"'
+    
+    # Adicionar BOM para UTF-8 (compatibilidade com Excel)
+    response.write('\ufeff')
+    
+    writer = csv.writer(response, delimiter=';')
+    
+    # Cabeçalho
+    writer.writerow([
+        'ID',
+        'Nome',
+        'Email',
+        'Idade',
+        'Data de Cadastro',
+        'Total de Pedidos',
+        'Valor Total em Pedidos'
+    ])
+    
+    # Dados dos clientes
+    for client in clients_list:
+        # Estatísticas do cliente
+        pedidos_stats = client.pedidos.aggregate(
+            total_pedidos=Count('id'),
+            valor_total=Sum('valor_total')
+        )
+        
+        writer.writerow([
+            client.id,
+            client.name,
+            client.email,
+            client.age,
+            client.created_at.strftime('%d/%m/%Y %H:%M') if hasattr(client, 'created_at') else 'N/A',
+            pedidos_stats['total_pedidos'] or 0,
+            f"{pedidos_stats['valor_total'] or 0:.2f}".replace('.', ',')  # Formato brasileiro
+        ])
+    
+    return response
