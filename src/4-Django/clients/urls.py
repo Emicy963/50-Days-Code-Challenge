@@ -29,7 +29,13 @@ urlpatterns = [
     path('pedidos/pdf/', views.pedidos_pdf_report, name='pedidos_pdf_report'),
     path('dashboard/pdf/', views.dashboard_pdf_report, name='dashboard_pdf_report'),
 
+    # URLs para exportação de dados em CSV
+    path('clients/export-csv/', views.export_clients_csv, name='export_clients_csv'),
+    path('pedidos/export-csv/', views.export_pedidos_csv, name='export_pedidos_csv'),
+    path('dashboard/export-csv/', views.export_dashboard_csv, name='export_dashboard_csv'),
+
     # URLs AJAX
+    path('ajax/buscar-cep/', views.get_address_by_cep, name='buscar_cep'),
     path('ajax/pedidos/<int:id>/status/', views.ajax_update_pedido_status, name='ajax_update_pedido_status'),
     path('ajax/clientes/<int:client_id>/pedidos/', views.ajax_get_client_pedidos, name='ajax_get_client_pedidos'),
 ]
