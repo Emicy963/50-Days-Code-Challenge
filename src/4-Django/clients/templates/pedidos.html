@@ -6,21 +6,31 @@
             <div class="mb-8">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-3xl font-bold text-gray-800">Gerenciar Pedidos</h1>
-                    {% if can_create %}
-                        <a href="{% url 'create_pedido' %}" 
-                           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
-                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Novo Pedido
-                        </a>
+                    <div class="flex space-x-3">
+                        {% if can_create %}
+                            <a href="{% url 'create_pedido' %}" 
+                               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Novo Pedido
+                            </a>
                         {% endif %}
-                        <a href="{% url 'pedidos_pdf_report' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="{% url 'export_pedidos_csv' %}?{{ request.GET.urlencode }}" 
+                           class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Exportar CSV
+                        </a>
+                        <a href="{% url 'pedidos_pdf_report' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                           class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l1.414 1.414A1 1 0 0115 5v14a2 2 0 01-2 2z"></path>
                             </svg>
                             Exportar PDF
                         </a>
+                    </div>
                 </div>
                 
                 <!-- Cards de estatísticas -->
