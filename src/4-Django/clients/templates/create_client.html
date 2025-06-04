@@ -61,7 +61,7 @@
         </div>
         
         <!-- Campo Idade -->
-        <div class="mb-6">
+        <div class="mb-4">
             <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                 {{ form.age.label }}
                 {% if form.age.field.required %}
@@ -75,6 +75,122 @@
             {% if form.age.errors %}
                 <div class="text-red-600 text-sm mt-1">
                     {% for error in form.age.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo CEP -->
+        <div class="mb-4">
+            <label for="{{ form.cep.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                CEP
+                {% if form.cep.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            <div class="relative">
+                {{ form.cep }}
+                <div id="loading-cep" class="absolute right-3 top-2 hidden">
+                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                </div>
+            </div>
+            {% if form.cep.help_text %}
+                <p class="text-sm text-gray-500 mt-1">{{ form.cep.help_text }}</p>
+            {% endif %}
+            {% if form.cep.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.cep.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo Logradouro -->
+        <div class="mb-4">
+            <label for="{{ form.logradouro.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Logradouro
+                {% if form.logradouro.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.logradouro }}
+            {% if form.logradouro.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.logradouro.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo Número -->
+        <div class="mb-4">
+            <label for="{{ form.numero.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Número
+                {% if form.numero.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.numero }}
+            {% if form.numero.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.numero.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo Bairro -->
+        <div class="mb-4">
+            <label for="{{ form.bairro.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Bairro
+                {% if form.bairro.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.bairro }}
+            {% if form.bairro.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.bairro.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo Cidade -->
+        <div class="mb-4">  
+            <label for="{{ form.cidade.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Cidade
+                {% if form.cidade.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.cidade }}
+            {% if form.cidade.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.cidade.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Campo UF -->
+        <div class="mb-6">
+            <label for="{{ form.uf.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                UF
+                {% if form.uf.field.required %}
+                    <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ form.uf }}
+            {% if form.uf.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.uf.errors %}
                         <p>{{ error }}</p>
                     {% endfor %}
                 </div>
@@ -106,6 +222,7 @@
             <li>• Nome deve conter apenas letras e espaços</li>
             <li>• Email deve ser único e válido</li>
             <li>• Idade mínima permitida é 18 anos</li>
+            <li>• Digite o CEP para preenchimento automático do endereço</li>
             <li>• Todos os campos são obrigatórios</li>
         </ul>
     </div>
@@ -114,7 +231,77 @@
 <!-- JavaScript para melhorar a experiência do usuário -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Validação em tempo real do nome
+    // Função para buscar CEP
+    function buscarCEP(cep) {
+        // Remover caracteres não numéricos
+        cep = cep.replace(/\D/g, '');
+        
+        if (cep.length !== 8) {
+            alert('CEP deve ter 8 dígitos');
+            return;
+        }
+        
+        // Mostrar loading
+        document.getElementById('loading-cep').style.display = 'block';
+        
+        fetch('/ajax/buscar-cep/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({cep: cep})
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading-cep').style.display = 'none';
+            
+            if (data.success) {
+                // Preencher campos do formulário
+                document.getElementById('id_logradouro').value = data.data.logradouro;
+                document.getElementById('id_bairro').value = data.data.bairro;
+                document.getElementById('id_cidade').value = data.data.cidade;
+                document.getElementById('id_uf').value = data.data.uf;
+                
+                // Focar no campo número
+                document.getElementById('id_numero').focus();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading-cep').style.display = 'none';
+            alert('Erro ao buscar CEP: ' + error);
+        });
+    }
+    
+    // Função para obter CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Adicionar evento ao campo CEP
+    const cepField = document.getElementById('id_cep');
+    if (cepField) {
+        cepField.addEventListener('blur', function() {
+            if (this.value) {
+                buscarCEP(this.value);
+            }
+        });
+    }
+    
+    // Validação em tempo real do nome (código original)
     const nameField = document.getElementById('{{ form.name.id_for_label }}');
     if (nameField) {
         nameField.addEventListener('input', function() {
@@ -129,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Validação em tempo real da idade
+    // Validação em tempo real da idade (código original)
     const ageField = document.getElementById('{{ form.age.id_for_label }}');
     if (ageField) {
         ageField.addEventListener('input', function() {
@@ -145,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Focar no primeiro campo com erro
+    // Focar no primeiro campo com erro (código original)
     const firstErrorField = document.querySelector('.text-red-600');
     if (firstErrorField) {
         const fieldId = firstErrorField.closest('.mb-4, .mb-6').querySelector('input, select, textarea').id;
