@@ -110,3 +110,23 @@ class PedidoListSerializer(serializers.ModelSerializer):
                  'prioridade_display_class', 'data_pedido', 'data_entrega_prevista',
                  'is_overdue', 'days_until_delivery', 'can_be_cancelled',
                  'created_at', 'updated_at']
+        
+class PedidoDetailSerializer(serializers.ModelSerializer):
+    """Serializer completo para detalhes do pedido"""
+    cliente = ClientListSerializer(read_only=True)
+    status_display = serializers.ReadOnlyField(source='get_status_display')
+    prioridade_display = serializers.ReadOnlyField(source='get_prioridade_display')
+    status_display_class = serializers.ReadOnlyField()
+    prioridade_display_class = serializers.ReadOnlyField()
+    is_overdue = serializers.ReadOnlyField()
+    days_until_delivery = serializers.ReadOnlyField()
+    can_be_cancelled = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Pedido
+        fields = ['id', 'numero_pedido', 'cliente', 'descricao', 'valor_total',
+                 'status', 'status_display', 'status_display_class',
+                 'prioridade', 'prioridade_display', 'prioridade_display_class',
+                 'data_pedido', 'data_entrega_prevista', 'data_entrega_realizada',
+                 'observacoes', 'is_overdue', 'days_until_delivery',
+                 'can_be_cancelled', 'created_at', 'updated_at']
