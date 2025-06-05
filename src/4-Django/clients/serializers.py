@@ -250,3 +250,10 @@ class PedidoStatsSerializer(serializers.Serializer):
     status_distribution = serializers.DictField()
     priority_distribution = serializers.DictField()
     overdue_orders = serializers.IntegerField()
+
+class DashboardStatsSerializer(serializers.Serializer):
+    """Serializer para estatísticas do dashboard"""
+    client_stats = ClientStatsSerializer()
+    pedido_stats = PedidoStatsSerializer()
+    recent_orders = PedidoListSerializer(many=True)
+    top_clients = ClientListSerializer(many=True)
