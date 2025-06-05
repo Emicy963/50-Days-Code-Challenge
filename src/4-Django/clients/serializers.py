@@ -72,3 +72,20 @@ class ClientDetailSerializer(serializers.ModelSerializer):
         return dict(
             obj.pedidos.values('status').annotate(count=Count('id')).values_list('status', 'count')
         )
+
+class ClientCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para criação e atualização de clientes"""
+    
+    class Meta:
+        model = Client
+        fields = ['name', 'email', 'age']
+    
+    def validate_age(self, value):
+        if value < 18:
+            raise serializers.ValidationError("Não aceitamos clientes menores de 18 anos.")
+        return value
+    
+    def validate_name(self, value):
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError("Nome deve ter pelo menos 2 caracteres.")
+        return value.strip()
