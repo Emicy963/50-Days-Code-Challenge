@@ -1,17 +1,5 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from . import views
-from . import api_views
-
-# Roteador para a API REST
-
-router = DefaultRouter()
-# Registrando as views da API
-router.register(r'clients', api_views.ClientViewSet)
-router.register(r'pedidos', api_views.PedidoViewSet)
-router.register(r'groups', api_views.GroupViewSet)
-router.register(r'users', api_views.UserViewSet)
-router.register(r'permissions', api_views.DashboardViewSet, basename='dashboard')
 
 urlpatterns = [
     path('', views.get_clients, name='clients'),
@@ -50,7 +38,4 @@ urlpatterns = [
     path('ajax/buscar-cep/', views.get_address_by_cep, name='buscar_cep'),
     path('ajax/pedidos/<int:id>/status/', views.ajax_update_pedido_status, name='ajax_update_pedido_status'),
     path('ajax/clientes/<int:client_id>/pedidos/', views.ajax_get_client_pedidos, name='ajax_get_client_pedidos'),
-
-    # URLs da API REST
-    path('api/', include(router.urls)),
 ]
