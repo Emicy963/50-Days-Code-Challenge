@@ -74,7 +74,7 @@ Este arquivo contém a **lista completa dos 50 desafios**, organizados por níve
 
 ### 🔸 APIs, Segurança e Deploy
 
-41. Criar API REST para o modelo Cliente com DRF 🔲
+41. Criar API REST para o modelo Cliente com DRF ✅
 42. Proteger API com autenticação JWT 🔲
 43. Criar testes automatizados para views com pytest/TestCase 🔲
 44. Implementar upload de arquivos (foto de perfil) 🔲
