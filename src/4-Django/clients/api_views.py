@@ -4,14 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, GroupPermission
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db.models import Count
 from django.utils import timezone
 from clients.models import Client, Pedido
 from .serializers import (
     ClientListSerializer, ClientStatsSerializer, ClientCreateUpdateSerializer,
     ClientDetailSerializer, PedidoListSerializer, PedidoBulkActionSerializer, PedidoCreateUpdateSerializer,
-    PedidoDetailSerializer, PedidoStatusUpdateSerializer, PedidoStatsSerializer, UserSerializer)
+    PedidoDetailSerializer, PedidoStatusUpdateSerializer, PedidoStatsSerializer, UserSerializer, GroupSerializer)
 
 class StandardResultsSetPagination(PageNumberPagination):
     """Paginação padrão para a API"""
@@ -403,3 +403,13 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering_fields = ['username', 'email', 'date_joined']
     ordering = ['username']
+
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para visualização de grupos
+    Apenas Administradores podem acessar
+    """
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated, GroupPermission]
+    required_groups = ['Administradores']
