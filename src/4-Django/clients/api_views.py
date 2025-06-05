@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, GroupPermission
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
@@ -12,6 +12,7 @@ from .serializers import (
     ClientListSerializer, ClientStatsSerializer, ClientCreateUpdateSerializer,
     ClientDetailSerializer, PedidoListSerializer, PedidoBulkActionSerializer, PedidoCreateUpdateSerializer,
     PedidoDetailSerializer, PedidoStatusUpdateSerializer, PedidoStatsSerializer, UserSerializer, GroupSerializer, DashboardStatsSerializer)
+from .permissions import GroupPermission
 
 class StandardResultsSetPagination(PageNumberPagination):
     """Paginação padrão para a API"""
