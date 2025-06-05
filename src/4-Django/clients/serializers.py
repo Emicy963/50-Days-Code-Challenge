@@ -22,3 +22,17 @@ class UserSerializer(serializers.ModelSerializer):
     def get_group_names(self, obj):
         """Retorna os nomes dos grupos do usuário."""
         return [group.name for group in obj.groups.all()]
+    
+class ClientListSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para listagem de clientes"""
+    age_group = serializers.ReadOnlyField(source='get_age_group')
+    display_name = serializers.ReadOnlyField()
+    total_pedidos = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Client
+        fields = ['id', 'name', 'email', 'age', 'age_group', 'display_name',
+                 'total_pedidos', 'created_at', 'updated_at']
+    
+    def get_total_pedidos(self, obj):
+        return obj.pedidos.count()
