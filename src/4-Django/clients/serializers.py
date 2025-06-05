@@ -191,3 +191,43 @@ class PedidoStatusUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         
         return instance
+    
+class PedidoBulkActionSerializer(serializers.Serializer):
+    """Serializer para ações em lote nos pedidos"""
+    ACTION_CHOICES = [
+        ('update_status', 'Atualizar Status'),
+        ('update_priority', 'Atualizar Prioridade'),
+        ('delete', 'Excluir'),
+    ]
+    
+    pedido_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        help_text="IDs dos pedidos para aplicar a ação"
+    )
+    action = serializers.ChoiceField(choices=ACTION_CHOICES)
+    new_status = serializers.ChoiceField(
+        choices=Pedido.STATUS_CHOICES,
+        required=False,
+        help_text="Novo status (obrigatório para action='update_status')"
+    )
+    new_priority = serializers.ChoiceField(
+        choices=Pedido.PRIORIDADE_CHOICES,
+        required=False,
+        help_text="Nova prioridade (obrigatório para action='update_priority')"
+    )
+    
+    def validate(self, attrs):
+        action = attrs.get('action')
+        
+        if action == 'update_status' and not attrs.get('new_status'):
+            raise serializers.ValidationError({
+                'new_status': 'Este campo é obrigatório quando a ação é "update_status".'
+            })
+        
+        if action == 'update_priority' and not attrs.get('new_priority'):
+            raise serializers.ValidationError({
+                'new_priority': 'Este campo é obrigatório quando a ação é "update_priority".'
+            })
+        
+        return attrs
