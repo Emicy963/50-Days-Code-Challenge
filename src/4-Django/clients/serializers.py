@@ -231,3 +231,11 @@ class PedidoBulkActionSerializer(serializers.Serializer):
             })
         
         return attrs
+
+class ClientStatsSerializer(serializers.Serializer):
+    """Serializer para estatísticas de clientes"""
+    total = serializers.IntegerField()
+    average_age = serializers.FloatField()
+    youngest = serializers.IntegerField()
+    oldest = serializers.IntegerField()
+    age_groups = serializers.DictField()
