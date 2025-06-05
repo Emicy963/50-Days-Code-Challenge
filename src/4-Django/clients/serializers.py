@@ -36,3 +36,39 @@ class ClientListSerializer(serializers.ModelSerializer):
     
     def get_total_pedidos(self, obj):
         return obj.pedidos.count()
+
+class ClientDetailSerializer(serializers.ModelSerializer):
+    """Serializer completo para detalhes do cliente"""
+    age_group = serializers.ReadOnlyField(source='get_age_group')
+    display_name = serializers.ReadOnlyField()
+    total_pedidos = serializers.SerializerMethodField()
+    pedidos_stats = serializers.SerializerMethodField()
+    pedidos_por_status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Client
+        fields = ['id', 'name', 'email', 'age', 'age_group', 'display_name',
+                 'total_pedidos', 'pedidos_stats', 'pedidos_por_status',
+                 'created_at', 'updated_at']
+    
+    def get_total_pedidos(self, obj):
+        return obj.pedidos.count()
+    
+    def get_pedidos_stats(self, obj):
+        from django.db.models import Count, Sum, Avg
+        stats = obj.pedidos.aggregate(
+            total_pedidos=Count('id'),
+            valor_total=Sum('valor_total'),
+            valor_medio=Avg('valor_total')
+        )
+        return {
+            'total_pedidos': stats['total_pedidos'] or 0,
+            'valor_total': str(stats['valor_total'] or Decimal('0.00')),
+            'valor_medio': str(round(stats['valor_medio'], 2) if stats['valor_medio'] else Decimal('0.00'))
+        }
+    
+    def get_pedidos_por_status(self, obj):
+        from django.db.models import Count
+        return dict(
+            obj.pedidos.values('status').annotate(count=Count('id')).values_list('status', 'count')
+        )
