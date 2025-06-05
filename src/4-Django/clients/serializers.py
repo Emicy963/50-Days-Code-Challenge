@@ -162,3 +162,32 @@ class PedidoCreateUpdateSerializer(serializers.ModelSerializer):
             from django.utils import timezone
             attrs['data_entrega_realizada'] = timezone.now()
         return attrs
+    
+class PedidoStatusUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para atualização apenas do status do pedido"""
+    observacao = serializers.CharField(required=False, allow_blank=True, max_length=500,
+                                     help_text="Observação sobre a mudança de status")
+    
+    class Meta:
+        model = Pedido
+        fields = ['status', 'observacao']
+    
+    def update(self, instance, validated_data):
+        observacao = validated_data.pop('observacao', '')
+        
+        # Adicionar observação sobre mudança de status
+        if observacao:
+            from django.utils import timezone
+            timestamp = timezone.now().strftime('%d/%m/%Y %H:%M')
+            new_observation = f"[{timestamp}] Status alterado para '{instance.get_status_display()}': {observacao}"
+            
+            if instance.observacoes:
+                instance.observacoes += f"\n\n{new_observation}"
+            else:
+                instance.observacoes = new_observation
+        
+        # Atualizar status
+        instance.status = validated_data['status']
+        instance.save()
+        
+        return instance
