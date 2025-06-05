@@ -239,3 +239,14 @@ class ClientStatsSerializer(serializers.Serializer):
     youngest = serializers.IntegerField()
     oldest = serializers.IntegerField()
     age_groups = serializers.DictField()
+
+class PedidoStatsSerializer(serializers.Serializer):
+    """Serializer para estatísticas de pedidos"""
+    total_orders = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+    average_order_value = serializers.DecimalField(max_digits=10, decimal_places=2)
+    monthly_orders = serializers.IntegerField()
+    monthly_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+    status_distribution = serializers.DictField()
+    priority_distribution = serializers.DictField()
+    overdue_orders = serializers.IntegerField()
