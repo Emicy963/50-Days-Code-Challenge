@@ -130,3 +130,35 @@ class PedidoDetailSerializer(serializers.ModelSerializer):
                  'data_pedido', 'data_entrega_prevista', 'data_entrega_realizada',
                  'observacoes', 'is_overdue', 'days_until_delivery',
                  'can_be_cancelled', 'created_at', 'updated_at']
+        
+class PedidoCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para criação e atualização de pedidos"""
+    
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'descricao', 'valor_total', 'status', 'prioridade',
+                 'data_entrega_prevista', 'observacoes']
+    
+    def validate_valor_total(self, value):
+        if value < 0:
+            raise serializers.ValidationError("O valor total não pode ser negativo.")
+        return value
+    
+    def validate_descricao(self, value):
+        if len(value.strip()) < 10:
+            raise serializers.ValidationError("Descrição deve ter pelo menos 10 caracteres.")
+        return value.strip()
+    
+    def validate_data_entrega_prevista(self, value):
+        if value:
+            from django.utils import timezone
+            if value < timezone.now().date():
+                raise serializers.ValidationError("A data de entrega prevista não pode ser no passado.")
+        return value
+    
+    def validate(self, attrs):
+        # Validação para pedidos entregues
+        if attrs.get('status') == 'entregue' and not attrs.get('data_entrega_realizada'):
+            from django.utils import timezone
+            attrs['data_entrega_realizada'] = timezone.now()
+        return attrs
