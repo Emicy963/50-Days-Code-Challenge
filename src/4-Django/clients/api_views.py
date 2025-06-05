@@ -4,13 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, GroupPermission
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.models import User
 from django.db.models import Count
 from django.utils import timezone
 from clients.models import Client, Pedido
 from .serializers import (
     ClientListSerializer, ClientStatsSerializer, ClientCreateUpdateSerializer,
     ClientDetailSerializer, PedidoListSerializer, PedidoBulkActionSerializer, PedidoCreateUpdateSerializer,
-    PedidoDetailSerializer, PedidoStatusUpdateSerializer, PedidoStatsSerializer)
+    PedidoDetailSerializer, PedidoStatusUpdateSerializer, PedidoStatsSerializer, UserSerializer)
 
 class StandardResultsSetPagination(PageNumberPagination):
     """Paginação padrão para a API"""
@@ -387,3 +388,18 @@ class PedidoViewSet(viewsets.ModelViewSet):
         
         serializer = PedidoListSerializer(overdue_pedidos, many=True)
         return Response(serializer.data)
+    
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para visualização de usuários
+    Apenas Administradores podem acessar
+    """
+    queryset = User.objects.all().prefetch_related('groups')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated, GroupPermission]
+    required_groups = ['Administradores']
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering_fields = ['username', 'email', 'date_joined']
+    ordering = ['username']
