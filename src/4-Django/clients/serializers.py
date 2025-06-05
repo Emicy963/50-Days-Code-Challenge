@@ -89,3 +89,24 @@ class ClientCreateUpdateSerializer(serializers.ModelSerializer):
         if len(value.strip()) < 2:
             raise serializers.ValidationError("Nome deve ter pelo menos 2 caracteres.")
         return value.strip()
+
+class PedidoListSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para listagem de pedidos"""
+    cliente_nome = serializers.ReadOnlyField(source='cliente.name')
+    cliente_email = serializers.ReadOnlyField(source='cliente.email')
+    status_display = serializers.ReadOnlyField(source='get_status_display')
+    prioridade_display = serializers.ReadOnlyField(source='get_prioridade_display')
+    status_display_class = serializers.ReadOnlyField()
+    prioridade_display_class = serializers.ReadOnlyField()
+    is_overdue = serializers.ReadOnlyField()
+    days_until_delivery = serializers.ReadOnlyField()
+    can_be_cancelled = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Pedido
+        fields = ['id', 'numero_pedido', 'cliente', 'cliente_nome', 'cliente_email',
+                 'descricao', 'valor_total', 'status', 'status_display', 
+                 'status_display_class', 'prioridade', 'prioridade_display',
+                 'prioridade_display_class', 'data_pedido', 'data_entrega_prevista',
+                 'is_overdue', 'days_until_delivery', 'can_be_cancelled',
+                 'created_at', 'updated_at']
