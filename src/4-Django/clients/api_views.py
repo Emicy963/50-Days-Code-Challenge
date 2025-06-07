@@ -33,6 +33,7 @@ from .serializers import (
     DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer, PasswordResetSerializer,
 )
 from .permissions import GroupPermission
+import jwt
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -836,3 +837,55 @@ class PasswordResetView(APIView):
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TokenVerifyView(APIView):
+    """
+    View para verificar se um token JWT é válido
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        token = request.data.get('token')
+        
+        if not token:
+            return Response({
+                'error': 'Token é obrigatório'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Verificar se o token é válido
+            from rest_framework_simplejwt.tokens import UntypedToken
+            UntypedToken(token)
+            
+            # Decodificar o token para obter informações do usuário
+            decoded_token = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=['HS256']
+            )
+            
+            user_id = decoded_token.get('user_id')
+            user = User.objects.get(id=user_id)
+            
+            return Response({
+                'valid': True,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'groups': [group.name for group in user.groups.all()],
+                },
+                'expires_at': decoded_token.get('exp')
+            })
+            
+        except jwt.ExpiredSignatureError:
+            return Response({
+                'valid': False,
+                'error': 'Token expirado'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+            
+        except (jwt.InvalidTokenError, User.DoesNotExist):
+            return Response({
+                'valid': False,
+                'error': 'Token inválido'
+            }, status=status.HTTP_401_UNAUTHORIZED)
