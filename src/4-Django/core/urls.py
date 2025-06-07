@@ -13,15 +13,13 @@ router.register(r"clients", api_views.ClientViewSet)
 router.register(r"pedidos", api_views.PedidoViewSet)
 router.register(r"groups", api_views.GroupViewSet)
 router.register(r"users", api_views.UserViewSet)
-router.register(r"dashboard", api_views.DashboardViewSet, basename="dashboard") 
+router.register(r"dashboard", api_views.DashboardViewSet, basename="dashboard")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("clients/", include("clients.urls")),
-    
     # URLs de autenticação JWT
     path("api/auth/", include("accounts.urls")),
-    
     # URLs da API REST
     path("api/", include(router.urls)),
 ]
