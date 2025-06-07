@@ -3,8 +3,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
+from django.conf import settings
+from django.contrib.auth import authenticate
 from django.db.models import Count, Sum
 from django.utils import timezone
 from clients.models import Client, Pedido
@@ -21,7 +24,7 @@ from .serializers import (
     PedidoStatsSerializer,
     UserSerializer,
     GroupSerializer,
-    DashboardStatsSerializer,
+    DashboardStatsSerializer, CustomTokenObtainPairSerializer
 )
 from .permissions import GroupPermission
 
@@ -623,3 +626,35 @@ class DashboardViewSet(viewsets.ViewSet):
         }
 
         return Response(charts_data)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    View customizada para obtenção de token JWT
+    """
+    serializer_class = CustomTokenObtainPairSerializer
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            
+            if response.status_code == 200:
+                # Log do login bem-sucedido
+                user = authenticate(
+                    username=request.data.get('username'),
+                    password=request.data.get('password')
+                )
+                if user:
+                    user.last_login = timezone.now()
+                    user.save(update_fields=['last_login'])
+                
+                # Adicionar informações extras na resposta
+                response.data['message'] = 'Login realizado com sucesso'
+                response.data['expires_in'] = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()
+                
+            return response
+            
+        except Exception as e:
+            return Response({
+                'error': 'Erro interno do servidor',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
