@@ -1,15 +1,8 @@
 from ex2 import string_invertor
 
-def romam_number_convertor(romam: str)->int:
-    romam_number = {
-        'I': 1,
-        'V': 5,
-        'X': 10,
-        'L': 50,
-        'C': 100,
-        'D': 500,
-        'M': 1000
-    }
+
+def romam_number_convertor(romam: str) -> int:
+    romam_number = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
     total = 0
     prev_value = 0

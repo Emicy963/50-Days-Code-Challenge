@@ -16,12 +16,14 @@ def login(users: dict, username_or_email: str, password: str) -> str:
     # Verificar se as credência foram digitadas
     if not username_or_email:
         raise Exception("Username ou email é obrigatório!")
-    
+
     if not password:
         raise Exception("Senha é obrigatória.")
-    
+
     # Verificando se o input é um email ou username
-    is_email = '@' in username_or_email # Verificando a presença do @ para identificar se é email
+    is_email = (
+        "@" in username_or_email
+    )  # Verificando a presença do @ para identificar se é email
 
     # Buscando o indíce do usuário pelo email ou username
     user_index = -1
@@ -33,7 +35,7 @@ def login(users: dict, username_or_email: str, password: str) -> str:
     else:
         if username_or_email in users["username"]:
             user_index = users["username"].index(username_or_email)
-    
+
     # Verifica se encontrou o usuário e se password corresponde
     if user_index >= 0 and users["password"][user_index] == password:
         return "Login feito com sucesso!"

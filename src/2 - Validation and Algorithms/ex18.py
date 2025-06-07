@@ -1,5 +1,5 @@
-def validar_sudoku(grade:list)->bool:
-    def valida_grupo(grupo:list)->bool:
+def validar_sudoku(grade: list) -> bool:
+    def valida_grupo(grupo: list) -> bool:
         nums = [num for num in grupo if num != 0]
         return len(nums) == len(set(nums)) and all(1 <= num <= 9 for num in nums)
 
@@ -14,11 +14,7 @@ def validar_sudoku(grade:list)->bool:
 
     for i in range(0, 9, 3):
         for j in range(0, 9, 3):
-            bloco = [
-                grade[x][y]
-                for x in range(i, i + 3)
-                for y in range(j, j + 3)
-            ]
+            bloco = [grade[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
             if not valida_grupo(bloco):
                 return False
 

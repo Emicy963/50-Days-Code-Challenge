@@ -1,4 +1,4 @@
-def duplicate_remove(elements:list)->list:
+def duplicate_remove(elements: list) -> list:
     views_elemnts = set()
     new_list = []
     for element in elements:

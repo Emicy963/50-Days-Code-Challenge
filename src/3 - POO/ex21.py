@@ -2,7 +2,9 @@ class ContaBancaria:
     # Método construtor (__init__) - Inicializa os atributos da conta bancária
     def __init__(self, amount: int, account_to_send_amount: int):
         self.amount = amount  # Saldo atual da conta
-        self.account_to_send_amount = account_to_send_amount  # Saldo da conta de destino para transferências
+        self.account_to_send_amount = (
+            account_to_send_amount  # Saldo da conta de destino para transferências
+        )
 
     # Método para consultar o saldo disponível
     def consultar_dinheiro(self) -> str:
@@ -67,7 +69,9 @@ class ContaBancaria:
         try:
             if value <= self.amount:  # Verifica se há saldo suficiente
                 self.amount -= value  # Subtrai o valor do saldo atual
-                self.account_to_send_amount += value  # Adiciona o valor ao saldo da conta de destino
+                self.account_to_send_amount += (
+                    value  # Adiciona o valor ao saldo da conta de destino
+                )
                 return f"Dinheiro transferido com sucesso.\n{self.consultar_dinheiro}"  # Retorna mensagem de sucesso
             else:
                 return f"Saldo insuficiente.\n{self.consultar_dinheiro}"  # Retorna mensagem de saldo insuficiente
