@@ -481,3 +481,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         return user
 
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer para perfil do usuário
+    """
+    groups = serializers.StringRelatedField(many=True, read_only=True)
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'full_name', 'is_active', 'date_joined', 'last_login',
+            'groups'
+        ]
+        read_only_fields = ['username', 'date_joined', 'last_login']
+    
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
