@@ -28,7 +28,7 @@ from .serializers import (
     PedidoStatsSerializer,
     UserSerializer,
     GroupSerializer,
-    DashboardStatsSerializer, CustomTokenObtainPairSerializer
+    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer
 )
 from .permissions import GroupPermission
 
@@ -712,3 +712,35 @@ class LogoutView(APIView):
                 'error': 'Token inválido',
                 'detail': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+class RegisterView(APIView):
+    """
+    View para registro de novos usuários
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            user = serializer.save()
+            
+            # Gerar tokens para o usuário recém-criado
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'message': 'Usuário registrado com sucesso',
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                },
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
