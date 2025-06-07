@@ -427,3 +427,57 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
         
         return data
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer para registro de novos usuários
+    """
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'}
+    )
+    
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'first_name', 'last_name',
+            'password', 'password_confirm'
+        ]
+    
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({
+                'password_confirm': 'As senhas não coincidem.'
+            })
+        return attrs
+    
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('Este email já está em uso.')
+        return value
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('Este nome de usuário já está em uso.')
+        return value
+    
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        password = validated_data.pop('password')
+        
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
+        
+        # Adicionar ao grupo padrão (Funcionários)
+        from django.contrib.auth.models import Group
+        funcionarios_group, created = Group.objects.get_or_create(name='Funcionários')
+        user.groups.add(funcionarios_group)
+        
+        return user
+
