@@ -11,6 +11,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
 from django.conf import settings
+from django.utils.crypto import get_random_string
+from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from django.db.models import Count, Sum
 from django.utils import timezone
@@ -28,7 +30,7 @@ from .serializers import (
     PedidoStatsSerializer,
     UserSerializer,
     GroupSerializer,
-    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer
+    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer, PasswordResetSerializer,
 )
 from .permissions import GroupPermission
 
@@ -791,5 +793,46 @@ class ChangePasswordView(APIView):
             return Response({
                 'message': 'Senha alterada com sucesso'
             })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetView(APIView):
+    """
+    View para solicitação de reset de senha
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User.objects.get(email=email)
+            
+            # Gerar token temporário
+            reset_token = get_random_string(32)
+            
+            # Armazenar token temporariamente (em produção, use cache ou banco)
+            # Aqui vamos usar um campo temporário no modelo User ou cache
+            
+            # Enviar email (configurar SMTP no settings)
+            try:
+                send_mail(
+                    'Reset de Senha - Sistema de Clientes',
+                    f'Use este token para resetar sua senha: {reset_token}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                
+                return Response({
+                    'message': 'Email de reset enviado com sucesso'
+                })
+                
+            except Exception as e:
+                return Response({
+                    'error': 'Erro ao enviar email',
+                    'detail': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
