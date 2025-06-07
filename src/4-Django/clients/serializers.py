@@ -500,3 +500,73 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer para mudança de senha
+    """
+    old_password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'}
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'}
+    )
+    
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({
+                'new_password_confirm': 'As senhas não coincidem.'
+            })
+        return attrs
+    
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('Senha atual incorreta.')
+        return value
+    
+    def save(self):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    """
+    Serializer para reset de senha
+    """
+    email = serializers.EmailField()
+    
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('Usuário com este email não encontrado.')
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer para confirmação de reset de senha
+    """
+    token = serializers.CharField()
+    new_password = serializers.CharField(
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    new_password_confirm = serializers.CharField(
+        style={'input_type': 'password'}
+    )
+    
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({
+                'new_password_confirm': 'As senhas não coincidem.'
+            })
+        return attrs
