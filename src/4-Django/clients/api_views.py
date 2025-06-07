@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -889,3 +889,41 @@ class TokenVerifyView(APIView):
                 'valid': False,
                 'error': 'Token inválido'
             }, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_info(request):
+    """
+    Função para obter informações do usuário autenticado
+    """
+    user = request.user
+    
+    return Response({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'is_staff': user.is_staff,
+        'is_superuser': user.is_superuser,
+        'groups': [group.name for group in user.groups.all()],
+        'permissions': get_user_permissions(user),
+        'last_login': user.last_login,
+        'date_joined': user.date_joined,
+    })
+
+
+def get_user_permissions(user):
+    """
+    Função auxiliar para obter permissões do usuário
+    """
+    permissions = []
+    
+    if user.groups.filter(name='Administradores').exists():
+        permissions = ['all']
+    elif user.groups.filter(name='Gerentes').exists():
+        permissions = ['read', 'write', 'update', 'delete_own']
+    elif user.groups.filter(name='Funcionários').exists():
+        permissions = ['read', 'update_status']
+    
+    return permissions
