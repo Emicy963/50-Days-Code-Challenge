@@ -28,7 +28,7 @@ from .serializers import (
     PedidoStatsSerializer,
     UserSerializer,
     GroupSerializer,
-    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer
+    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer
 )
 from .permissions import GroupPermission
 
@@ -768,6 +768,28 @@ class UserProfileView(APIView):
             return Response({
                 'message': 'Perfil atualizado com sucesso',
                 'user': serializer.data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangePasswordView(APIView):
+    """
+    View para mudança de senha
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            
+            return Response({
+                'message': 'Senha alterada com sucesso'
             })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
