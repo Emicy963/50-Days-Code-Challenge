@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User, Group
 from .models import Client, Pedido
 from decimal import Decimal
@@ -376,3 +377,53 @@ class DashboardStatsSerializer(serializers.Serializer):
     pedido_stats = PedidoStatsSerializer()
     recent_orders = PedidoListSerializer(many=True)
     top_clients = ClientListSerializer(many=True)
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Serializer customizado para JWT token com informações adicionais do usuário
+    """
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        
+        # Adicionar claims customizados
+        token['username'] = user.username
+        token['email'] = user.email
+        token['first_name'] = user.first_name
+        token['last_name'] = user.last_name
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
+        
+        # Adicionar grupos do usuário
+        token['groups'] = [group.name for group in user.groups.all()]
+        
+        # Adicionar permissões específicas
+        permissions = []
+        if user.groups.filter(name='Administradores').exists():
+            permissions = ['all']
+        elif user.groups.filter(name='Gerentes').exists():
+            permissions = ['read', 'write', 'update']
+        elif user.groups.filter(name='Funcionários').exists():
+            permissions = ['read', 'update_status']
+        
+        token['permissions'] = permissions
+        
+        return token
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Adicionar informações do usuário na resposta
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'is_staff': self.user.is_staff,
+            'groups': [group.name for group in self.user.groups.all()],
+            'last_login': self.user.last_login,
+        }
+        
+        return data
