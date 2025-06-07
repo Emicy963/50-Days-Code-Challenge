@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import TokenError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
 from django.conf import settings
@@ -658,3 +659,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 'error': 'Erro interno do servidor',
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    View customizada para refresh de token JWT
+    """
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            
+            if response.status_code == 200:
+                response.data['message'] = 'Token atualizado com sucesso'
+                response.data['expires_in'] = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()
+            
+            return response
+            
+        except TokenError as e:
+            return Response({
+                'error': 'Token inválido',
+                'detail': str(e)
+            }, status=status.HTTP_401_UNAUTHORIZED)
