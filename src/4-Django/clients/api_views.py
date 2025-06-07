@@ -28,7 +28,7 @@ from .serializers import (
     PedidoStatsSerializer,
     UserSerializer,
     GroupSerializer,
-    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer
+    DashboardStatsSerializer, CustomTokenObtainPairSerializer, UserRegistrationSerializer, UserProfileSerializer
 )
 from .permissions import GroupPermission
 
@@ -742,5 +742,32 @@ class RegisterView(APIView):
                     'access': str(refresh.access_token),
                 }
             }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfileView(APIView):
+    """
+    View para visualização e atualização do perfil do usuário
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+    
+    def patch(self, request):
+        serializer = UserProfileSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Perfil atualizado com sucesso',
+                'user': serializer.data
+            })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
