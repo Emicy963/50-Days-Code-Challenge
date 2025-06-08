@@ -293,3 +293,36 @@ class APIAuthTestCase(APITestCase):
         response = self.client.post(url, data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_profile_view_get(self):
+        """Testa obtenção do perfil do usuário"""
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_profile')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['email'], 'test@example.com')
+    
+    def test_user_profile_view_patch(self):
+        """Testa atualização do perfil do usuário"""
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_profile')
+        data = {
+            'first_name': 'Updated',
+            'last_name': 'Name'
+        }
+        
+        response = self.client.patch(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], "Perfil atualizado com sucesso")
+        
+        # Verifica se foi atualizado no banco
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Updated')
+        self.assertEqual(self.user.last_name, 'Name')
