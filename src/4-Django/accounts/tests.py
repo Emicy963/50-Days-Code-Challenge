@@ -326,3 +326,59 @@ class APIAuthTestCase(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, 'Updated')
         self.assertEqual(self.user.last_name, 'Name')
+
+    def test_change_password_view_success(self):
+        """Testa mudança de senha com sucesso"""
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('change_password')
+        data = {
+            'old_password': 'testpassword123',
+            'new_password': 'newpassword456',
+            'new_password_confirm': 'newpassword456'
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], "Senha alterada com sucesso")
+    
+    def test_change_password_view_wrong_old_password(self):
+        """Testa mudança de senha com senha antiga incorreta"""
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('change_password')
+        data = {
+            'old_password': 'wrongpassword',
+            'new_password': 'newpassword456',
+            'new_password_confirm': 'newpassword456'
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    @patch('django.core.mail.send_mail')
+    def test_password_reset_view_success(self, mock_send_mail):
+        """Testa solicitação de reset de senha com sucesso"""
+        mock_send_mail.return_value = True
+        
+        url = reverse('password_reset')
+        data = {'email': 'test@example.com'}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], "Email de reset enviado com sucesso")
+        mock_send_mail.assert_called_once()
+    
+    def test_password_reset_view_invalid_email(self):
+        """Testa reset de senha com email inválido"""
+        url = reverse('password_reset')
+        data = {'email': 'nonexistent@example.com'}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
