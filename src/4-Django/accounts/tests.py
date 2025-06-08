@@ -78,3 +78,19 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertIn("Este nome de usuário já foi cadastrado", str(messages[0]))
+
+    def test_register_view_passwords_dont_match(self):
+        """Testa registro com senhas diferentes"""
+        data = {
+            'name': 'newuser',
+            'email': 'newuser@example.com',
+            'password': 'password123',
+            'confirm_password': 'differentpassword'
+        }
+        
+        response = self.client.post(reverse('register'), data)
+        
+        self.assertRedirects(response, reverse('register'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("As passwords são diferentes", str(messages[0]))
