@@ -382,3 +382,27 @@ class APIAuthTestCase(APITestCase):
         response = self.client.post(url, data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_token_verify_view_valid_token(self):
+        """Testa verificação de token válido"""
+        tokens = self.get_jwt_token()
+        
+        url = reverse('token_verify')
+        data = {'token': tokens['access']}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['valid'])
+        self.assertIn('user', response.data)
+        self.assertEqual(response.data['user']['username'], 'testuser')
+    
+    def test_token_verify_view_invalid_token(self):
+        """Testa verificação de token inválido"""
+        url = reverse('token_verify')
+        data = {'token': 'invalid_token'}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(response.data['valid'])
