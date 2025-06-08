@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.contrib.messages import get_messages
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIClient
 
 # TESTES PARA VIEWS TRADICIONAIS (TEMPLATES)
@@ -196,3 +198,63 @@ class APIAuthTestCase(APITestCase):
         self.admin_group = Group.objects.create(name='Administradores')
         self.manager_group = Group.objects.create(name='Gerentes')
         self.employee_group = Group.objects.create(name='Funcionários')
+
+
+    def get_jwt_token(self, user=None):
+        """Gera token JWT para testes"""
+        if user is None:
+            user = self.user
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        }
+    
+    def test_custom_token_obtain_pair_success(self):
+        """Testa obtenção de token JWT com sucesso"""
+        url = reverse('token_obtain_pair')
+        data = {
+            'username': 'testuser',
+            'password': 'testpassword123'
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+        self.assertEqual(response.data['message'], "Login realizado com sucesso")
+        self.assertIn('expires_in', response.data)
+    
+    def test_custom_token_obtain_pair_invalid_credentials(self):
+        """Testa obtenção de token com credenciais inválidas"""
+        url = reverse('token_obtain_pair')
+        data = {
+            'username': 'testuser',
+            'password': 'wrongpassword'
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_custom_token_refresh_success(self):
+        """Testa refresh de token JWT com sucesso"""
+        tokens = self.get_jwt_token()
+        url = reverse('token_refresh')
+        data = {'refresh': tokens['refresh']}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertEqual(response.data['message'], "Token atualizado com sucesso")
+    
+    def test_custom_token_refresh_invalid_token(self):
+        """Testa refresh com token inválido"""
+        url = reverse('token_refresh')
+        data = {'refresh': 'invalid_token'}
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
