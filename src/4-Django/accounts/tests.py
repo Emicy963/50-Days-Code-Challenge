@@ -5,6 +5,7 @@ from django.contrib.messages import get_messages
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIClient
+from unittest.mock import patch
 
 # TESTES PARA VIEWS TRADICIONAIS (TEMPLATES)
 
