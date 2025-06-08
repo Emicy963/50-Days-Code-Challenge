@@ -160,3 +160,15 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertIn("Por favor, preencha todos os campos", str(messages[0]))
+
+    def test_logout_view(self):
+        """Testa logout do usuário"""
+        # Primeiro faz login
+        self.client.login(username='testuser', password='testpassword123')
+        
+        response = self.client.get(reverse('logout'))
+        
+        self.assertRedirects(response, reverse('login'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), "Logout realizado com sucesso!")
