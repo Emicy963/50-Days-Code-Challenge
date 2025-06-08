@@ -94,3 +94,19 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertIn("As passwords são diferentes", str(messages[0]))
+
+    def test_register_view_password_too_short(self):
+        """Testa registro com senha muito curta"""
+        data = {
+            'name': 'newuser',
+            'email': 'newuser@example.com',
+            'password': '123',  # Menos de 8 caracteres
+            'confirm_password': '123'
+        }
+        
+        response = self.client.post(reverse('register'), data)
+        
+        self.assertRedirects(response, reverse('register'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("A password deve ter pelo menos 8 caracteres", str(messages[0]))
