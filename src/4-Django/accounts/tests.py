@@ -146,3 +146,17 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertIn("Usuário ou senha inválida", str(messages[0]))
+
+    def test_login_view_empty_fields(self):
+        """Testa login com campos vazios"""
+        data = {
+            'username': '',
+            'password': ''
+        }
+        
+        response = self.client.post(reverse('login'), data)
+        
+        self.assertRedirects(response, reverse('login'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("Por favor, preencha todos os campos", str(messages[0]))
