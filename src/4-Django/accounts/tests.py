@@ -46,3 +46,19 @@ class AuthViewsTestCase(TestCase):
         # Verifica mensagem de sucesso
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(str(messages[0]), "Conta criada com sucesso!")
+
+    def test_register_view_email_already_exists(self):
+        """Testa registro com email já existente"""
+        data = {
+            'name': 'newuser',
+            'email': 'test@example.com',  # Email já existe
+            'password': 'newpassword123',
+            'confirm_password': 'newpassword123'
+        }
+        
+        response = self.client.post(reverse('register'), data)
+        
+        self.assertRedirects(response, reverse('register'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("Este email já foi cadastrado", str(messages[0]))
