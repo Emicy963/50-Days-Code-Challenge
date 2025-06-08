@@ -259,4 +259,37 @@ class APIAuthTestCase(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_register_view_success(self):
+        """Testa registro via API com sucesso"""
+        url = reverse('api_register')
+        data = {
+            'username': 'newuser',
+            'email': 'newuser@example.com',
+            'password': 'newpassword123',
+            'password_confirm': 'newpassword123',
+            'first_name': 'New',
+            'last_name': 'User'
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['message'], "Usuário registrado com sucesso")
+        self.assertIn('user', response.data)
+        self.assertIn('tokens', response.data)
+        
+        # Verifica se usuário foi criado
+        self.assertTrue(User.objects.filter(username='newuser').exists())
     
+    def test_register_view_invalid_data(self):
+        """Testa registro com dados inválidos"""
+        url = reverse('api_register')
+        data = {
+            'username': '',  # Username vazio
+            'email': 'invalid_email',  # Email inválido
+            'password': '123',  # Senha muito curta
+        }
+        
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
