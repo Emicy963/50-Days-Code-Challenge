@@ -1,7 +1,8 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.contrib.messages import get_messages
+from rest_framework.test import APITestCase, APIClient
 
 # TESTES PARA VIEWS TRADICIONAIS (TEMPLATES)
 
@@ -172,3 +173,26 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(str(messages[0]), "Logout realizado com sucesso!")
+
+
+# TESTES PARA API VIEWS
+
+class APIAuthTestCase(APITestCase):
+    """Testes para views de API de autenticação"""
+    
+    def setUp(self):
+        """Configuração inicial para cada teste"""
+        self.client = APIClient()
+        self.user_data = {
+            'username': 'testuser',
+            'email': 'test@example.com',
+            'password': 'testpassword123',
+            'first_name': 'Test',
+            'last_name': 'User'
+        }
+        self.user = User.objects.create_user(**self.user_data)
+        
+        # Criar grupos de teste
+        self.admin_group = Group.objects.create(name='Administradores')
+        self.manager_group = Group.objects.create(name='Gerentes')
+        self.employee_group = Group.objects.create(name='Funcionários')
