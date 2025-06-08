@@ -406,3 +406,53 @@ class APIAuthTestCase(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertFalse(response.data['valid'])
+
+
+    def test_user_info_view(self):
+        """Testa obtenção de informações do usuário"""
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_info')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['email'], 'test@example.com')
+        self.assertIn('permissions', response.data)
+    
+    def test_get_user_permissions_admin(self):
+        """Testa permissões para usuário administrador"""
+        self.user.groups.add(self.admin_group)
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_info')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['permissions'], ['all'])
+    
+    def test_get_user_permissions_manager(self):
+        """Testa permissões para usuário gerente"""
+        self.user.groups.add(self.manager_group)
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_info')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['permissions'], ['read', 'write', 'update', 'delete_own'])
+    
+    def test_get_user_permissions_employee(self):
+        """Testa permissões para usuário funcionário"""
+        self.user.groups.add(self.employee_group)
+        tokens = self.get_jwt_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+        
+        url = reverse('user_info')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['permissions'], ['read', 'update_status'])
