@@ -132,3 +132,17 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(str(messages[0]), "Login realizado com sucesso!")
+
+    def test_login_view_invalid_credentials(self):
+        """Testa login com credenciais inválidas"""
+        data = {
+            'username': 'testuser',
+            'password': 'wrongpassword'
+        }
+        
+        response = self.client.post(reverse('login'), data)
+        
+        self.assertRedirects(response, reverse('login'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("Usuário ou senha inválida", str(messages[0]))
