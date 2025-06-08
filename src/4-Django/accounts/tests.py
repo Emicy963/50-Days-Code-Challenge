@@ -258,3 +258,5 @@ class APIAuthTestCase(APITestCase):
         response = self.client.post(url, data)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    
