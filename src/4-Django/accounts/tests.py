@@ -117,3 +117,18 @@ class AuthViewsTestCase(TestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'login.html')
+
+
+    def test_login_view_post_success(self):
+        """Testa login bem-sucedido"""
+        data = {
+            'username': 'testuser',
+            'password': 'testpassword123'
+        }
+        
+        response = self.client.post(reverse('login'), data)
+        
+        self.assertRedirects(response, reverse('clients'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), "Login realizado com sucesso!")
