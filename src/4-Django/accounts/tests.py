@@ -62,3 +62,19 @@ class AuthViewsTestCase(TestCase):
         
         messages = list(get_messages(response.wsgi_request))
         self.assertIn("Este email já foi cadastrado", str(messages[0]))
+
+    def test_register_view_username_already_exists(self):
+        """Testa registro com nome de usuário já existente"""
+        data = {
+            'name': 'testuser',  # Username já existe
+            'email': 'newuser@example.com',
+            'password': 'newpassword123',
+            'confirm_password': 'newpassword123'
+        }
+        
+        response = self.client.post(reverse('register'), data)
+        
+        self.assertRedirects(response, reverse('register'))
+        
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn("Este nome de usuário já foi cadastrado", str(messages[0]))
