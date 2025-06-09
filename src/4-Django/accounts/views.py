@@ -16,7 +16,7 @@ def register_view(request):
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
-        if User.objects.filter(email=email).exists():  # erificar se o email já existe
+        if User.objects.filter(email=email).exists():  # Verificar se o email já existe
             messages.error(request, "Este email já foi cadastrado. Tente um diferente!")
             return redirect("register")
         if User.objects.filter(username=name).exists():
