@@ -1,78 +1,123 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import FileExtensionValidator
+from django.utils import timezone
 import os
-from PIL import Image
 
-def user_profile_photo_path(instance, filename):
+
+def user_profile_image_path(instance, filename):
     """
-    Funcão para definir o caminho do arquivo de foto de perfil do usuário.
+    Função para definir o caminho onde a imagem será salva
     """
-    # Obter extensão do arquivo
+    # Obter a extensão do arquivo
     ext = filename.split('.')[-1]
-    # Criar nome único baseado no ID do usuário
-    filename = f"user_{instance.user.id}_profile.{ext}"
-    return os.path.join('profile_photos', filename)
+    
+    # Criar nome único baseado no ID do usuário e timestamp
+    filename = f'user_{instance.user.id}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.{ext}'
+    
+    # Retornar o caminho completo
+    return os.path.join('profile_images/', filename)
+
 
 class UserProfile(models.Model):
     """
     Modelo para perfil estendido do usuário
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_photo = models.ImageField(
-        upload_to=user_profile_photo_path,
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='profile'
+    )
+    
+    profile_image = models.ImageField(
+        upload_to=user_profile_image_path,
         null=True,
         blank=True,
-        validators=[
-            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])
-        ],
-        help_text="Formatos aceitos: JPG, JPEG, PNG, GIF. Tamanho máximo: 2MB"
+        help_text="Foto de perfil do usuário"
     )
-    bio = models.TextField(max_length=500, blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    bio = models.TextField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="Biografia do usuário"
+    )
+    
+    phone = models.CharField(
+        max_length=15, 
+        blank=True, 
+        null=True,
+        help_text="Telefone do usuário"
+    )
+    
+    birth_date = models.DateField(
+        null=True, 
+        blank=True,
+        help_text="Data de nascimento"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
         verbose_name = "Perfil do Usuário"
         verbose_name_plural = "Perfis dos Usuários"
-
+    
     def __str__(self):
         return f"Perfil de {self.user.username}"
-
-    def save(self, *args, **kwargs):
-        # Deletar foto anterior se existir
-        if self.pk:
+    
+    @property
+    def profile_image_url(self):
+        """
+        Retorna a URL da imagem de perfil ou None se não existir
+        """
+        if self.profile_image and hasattr(self.profile_image, 'url'):
+            return self.profile_image.url
+        return None
+    
+    def delete_old_image(self):
+        """
+        Remove a imagem antiga quando uma nova é uploadada
+        """
+        if self.profile_image:
             try:
-                old_profile = UserProfile.objects.get(pk=self.pk)
-                if old_profile.profile_photo and old_profile.profile_photo != self.profile_photo:
-                    if os.path.isfile(old_profile.profile_photo.path):
-                        os.remove(old_profile.profile_photo.path)
-            except UserProfile.DoesNotExist:
+                if os.path.isfile(self.profile_image.path):
+                    os.remove(self.profile_image.path)
+            except Exception:
                 pass
 
-        super().save(*args, **kwargs)
 
-        # Redimensionar imagem se necessário
-        if self.profile_photo:
-            self.resize_image()
+# Signal para criar perfil automaticamente quando um usuário é criado
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
 
-    def resize_image(self):
-        """
-        Redimensionar imagem para economizar espaço
-        """
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Cria um perfil automaticamente quando um usuário é criado
+    """
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Salva o perfil do usuário quando o usuário é salvo
+    """
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+
+
+@receiver(pre_save, sender=UserProfile)
+def delete_old_profile_image(sender, instance, **kwargs):
+    """
+    Remove a imagem antiga antes de salvar uma nova
+    """
+    if instance.pk:
         try:
-            with Image.open(self.profile_photo.path) as img:
-                # Redimensionar mantendo proporção (máximo 400x400)
-                if img.height > 400 or img.width > 400:
-                    img.thumbnail((400, 400), Image.Resampling.LANCZOS)
-                    img.save(self.profile_photo.path, optimize=True, quality=85)
-        except Exception as e:
-            print(f"Erro ao redimensionar imagem: {e}")
-
-    def delete(self, *args, **kwargs):
-        # Deletar arquivo de foto ao excluir perfil
-        if self.profile_photo:
-            if os.path.isfile(self.profile_photo.path):
-                os.remove(self.profile_photo.path)
-        super().delete(*args, **kwargs)
+            old_instance = UserProfile.objects.get(pk=instance.pk)
+            if old_instance.profile_image and old_instance.profile_image != instance.profile_image:
+                old_instance.delete_old_image()
+        except UserProfile.DoesNotExist:
+            pass
