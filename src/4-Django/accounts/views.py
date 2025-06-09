@@ -314,32 +314,61 @@ class UserCompleteProfileView(APIView):
             "message": "Perfil atualizado com sucesso",
             "user": updated_serializer.data
         })
-
-class UserProfileView(APIView):
+    
+class ProfileImageUploadView(APIView):
     """
-    View para visualização e atualização do perfil do usuário
+    View específica para upload de imagem de perfil
     """
-
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+    parser_classes = [MultiPartParser, FormParser]
 
-    def get(self, request):
-        serializer = UserProfileSerializer(request.user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = UserProfileSerializer(
-            request.user, data=request.data, partial=True
-        )
-
+    def post(self, request):
+        """
+        Upload de nova imagem de perfil
+        """
+        serializer = ProfileImageUploadSerializer(data=request.data)
+        
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "Perfil atualizado com sucesso", "user": serializer.data}
-            )
-
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            
+            # Salvar nova imagem
+            profile.profile_image = serializer.validated_data['profile_image']
+            profile.save()
+            
+            # Redimensionar imagem usando o método do serializer
+            profile_serializer = UserProfileSerializer(profile, context={'request': request})
+            
+            return Response({
+                "message": "Imagem de perfil atualizada com sucesso",
+                "profile_image_url": profile_serializer.data['profile_image_url']
+            })
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
+    def delete(self, request):
+        """
+        Remove imagem de perfil
+        """
+        try:
+            profile = request.user.profile
+            if profile.profile_image:
+                profile.delete_old_image()
+                profile.profile_image = None
+                profile.save()
+                
+                return Response({
+                    "message": "Imagem de perfil removida com sucesso"
+                })
+            else:
+                return Response({
+                    "message": "Usuário não possui imagem de perfil"
+                }, status=status.HTTP_404_NOT_FOUND)
+                
+        except UserProfile.DoesNotExist:
+            return Response({
+                "error": "Perfil não encontrado"
+            }, status=status.HTTP_404_NOT_FOUND)
 
 class ChangePasswordView(APIView):
     """
