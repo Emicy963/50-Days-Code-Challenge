@@ -109,7 +109,9 @@ from .serializers import (
     UserRegistrationSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
-    PasswordResetSerializer, UserCompleteProfileSerializer, ProfileImageUploadSerializer
+    PasswordResetSerializer,
+    UserCompleteProfileSerializer,
+    ProfileImageUploadSerializer,
 )
 import jwt
 
@@ -242,10 +244,12 @@ class RegisterView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UserCompleteProfileView(APIView):
     """
     View para visualização e atualização completa do perfil do usuário
     """
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser]  # Para upload de arquivos
@@ -255,8 +259,7 @@ class UserCompleteProfileView(APIView):
         Retorna perfil completo do usuário
         """
         serializer = UserCompleteProfileSerializer(
-            request.user, 
-            context={'request': request}
+            request.user, context={"request": request}
         )
         return Response(serializer.data)
 
@@ -266,91 +269,89 @@ class UserCompleteProfileView(APIView):
         """
         user_data = {}
         profile_data = {}
-        
+
         # Separar dados do User e UserProfile
-        user_fields = ['first_name', 'last_name', 'email']
-        profile_fields = ['bio', 'phone', 'birth_date', 'profile_image']
-        
+        user_fields = ["first_name", "last_name", "email"]
+        profile_fields = ["bio", "phone", "birth_date", "profile_image"]
+
         for key, value in request.data.items():
             if key in user_fields:
                 user_data[key] = value
             elif key in profile_fields:
                 profile_data[key] = value
-        
+
         # Atualizar dados do usuário
         if user_data:
             user_serializer = UserCompleteProfileSerializer(
-                request.user, 
-                data=user_data, 
-                partial=True,
-                context={'request': request}
+                request.user, data=user_data, partial=True, context={"request": request}
             )
             if user_serializer.is_valid():
                 user_serializer.save()
             else:
-                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response(
+                    user_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+
         # Atualizar perfil do usuário
         if profile_data:
             profile, created = UserProfile.objects.get_or_create(user=request.user)
             profile_serializer = UserProfileSerializer(
-                profile, 
-                data=profile_data, 
-                partial=True,
-                context={'request': request}
+                profile, data=profile_data, partial=True, context={"request": request}
             )
             if profile_serializer.is_valid():
                 profile_serializer.save()
             else:
-                return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response(
+                    profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+
         # Retornar dados atualizados
         updated_serializer = UserCompleteProfileSerializer(
-            request.user, 
-            context={'request': request}
+            request.user, context={"request": request}
         )
-        
-        return Response({
-            "message": "Perfil atualizado com sucesso",
-            "user": updated_serializer.data
-        })
+
+        return Response(
+            {
+                "message": "Perfil atualizado com sucesso",
+                "user": updated_serializer.data,
+            }
+        )
+
 
 class UserProfileView(APIView):
     """
     View para visualização e atualização do perfil do usuário (ATUALIZADA)
     """
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         # Usar o novo serializer completo
         serializer = UserCompleteProfileSerializer(
-            request.user, 
-            context={'request': request}
+            request.user, context={"request": request}
         )
         return Response(serializer.data)
 
     def patch(self, request):
         serializer = UserCompleteProfileSerializer(
-            request.user, 
-            data=request.data, 
-            partial=True,
-            context={'request': request}
+            request.user, data=request.data, partial=True, context={"request": request}
         )
 
         if serializer.is_valid():
             serializer.save()
-            return Response({
-                "message": "Perfil atualizado com sucesso", 
-                "user": serializer.data
-            })
+            return Response(
+                {"message": "Perfil atualizado com sucesso", "user": serializer.data}
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class ProfileImageUploadView(APIView):
     """
     View específica para upload de imagem de perfil
     """
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser]
@@ -360,24 +361,28 @@ class ProfileImageUploadView(APIView):
         Upload de nova imagem de perfil
         """
         serializer = ProfileImageUploadSerializer(data=request.data)
-        
+
         if serializer.is_valid():
             profile, created = UserProfile.objects.get_or_create(user=request.user)
-            
+
             # Salvar nova imagem
-            profile.profile_image = serializer.validated_data['profile_image']
+            profile.profile_image = serializer.validated_data["profile_image"]
             profile.save()
-            
+
             # Redimensionar imagem usando o método do serializer
-            profile_serializer = UserProfileSerializer(profile, context={'request': request})
-            
-            return Response({
-                "message": "Imagem de perfil atualizada com sucesso",
-                "profile_image_url": profile_serializer.data['profile_image_url']
-            })
-        
+            profile_serializer = UserProfileSerializer(
+                profile, context={"request": request}
+            )
+
+            return Response(
+                {
+                    "message": "Imagem de perfil atualizada com sucesso",
+                    "profile_image_url": profile_serializer.data["profile_image_url"],
+                }
+            )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def delete(self, request):
         """
         Remove imagem de perfil
@@ -388,24 +393,25 @@ class ProfileImageUploadView(APIView):
                 profile.delete_old_image()
                 profile.profile_image = None
                 profile.save()
-                
-                return Response({
-                    "message": "Imagem de perfil removida com sucesso"
-                })
+
+                return Response({"message": "Imagem de perfil removida com sucesso"})
             else:
-                return Response({
-                    "message": "Usuário não possui imagem de perfil"
-                }, status=status.HTTP_404_NOT_FOUND)
-                
+                return Response(
+                    {"message": "Usuário não possui imagem de perfil"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
         except UserProfile.DoesNotExist:
-            return Response({
-                "error": "Perfil não encontrado"
-            }, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "Perfil não encontrado"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class UserProfileDetailView(APIView):
     """
     View para detalhes específicos do perfil
     """
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
@@ -414,7 +420,7 @@ class UserProfileDetailView(APIView):
         Retorna apenas dados do perfil estendido
         """
         profile, created = UserProfile.objects.get_or_create(user=request.user)
-        serializer = UserProfileSerializer(profile, context={'request': request})
+        serializer = UserProfileSerializer(profile, context={"request": request})
         return Response(serializer.data)
 
     def patch(self, request):
@@ -423,20 +429,17 @@ class UserProfileDetailView(APIView):
         """
         profile, created = UserProfile.objects.get_or_create(user=request.user)
         serializer = UserProfileSerializer(
-            profile, 
-            data=request.data, 
-            partial=True,
-            context={'request': request}
+            profile, data=request.data, partial=True, context={"request": request}
         )
 
         if serializer.is_valid():
             serializer.save()
-            return Response({
-                "message": "Perfil atualizado com sucesso",
-                "profile": serializer.data
-            })
+            return Response(
+                {"message": "Perfil atualizado com sucesso", "profile": serializer.data}
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ChangePasswordView(APIView):
     """
