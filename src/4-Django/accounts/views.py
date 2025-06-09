@@ -394,7 +394,42 @@ class ProfileImageUploadView(APIView):
             return Response({
                 "error": "Perfil não encontrado"
             }, status=status.HTTP_404_NOT_FOUND)
+        
+class UserProfileDetailView(APIView):
+    """
+    View para detalhes específicos do perfil
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
+    def get(self, request):
+        """
+        Retorna apenas dados do perfil estendido
+        """
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        """
+        Atualiza apenas dados do perfil estendido
+        """
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(
+            profile, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Perfil atualizado com sucesso",
+                "profile": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ChangePasswordView(APIView):
     """
