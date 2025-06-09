@@ -69,3 +69,10 @@ class UserProfile(models.Model):
                     img.save(self.profile_photo.path, optimize=True, quality=85)
         except Exception as e:
             print(f"Erro ao redimensionar imagem: {e}")
+
+    def delete(self, *args, **kwargs):
+        # Deletar arquivo de foto ao excluir perfil
+        if self.profile_photo:
+            if os.path.isfile(self.profile_photo.path):
+                os.remove(self.profile_photo.path)
+        super().delete(*args, **kwargs)
