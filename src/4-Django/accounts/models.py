@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
 import os
+from PIL import Image
 
 def user_profile_photo_path(instance, filename):
     """
@@ -55,3 +56,16 @@ class UserProfile(models.Model):
         # Redimensionar imagem se necessário
         if self.profile_photo:
             self.resize_image()
+
+    def resize_image(self):
+        """
+        Redimensionar imagem para economizar espaço
+        """
+        try:
+            with Image.open(self.profile_photo.path) as img:
+                # Redimensionar mantendo proporção (máximo 400x400)
+                if img.height > 400 or img.width > 400:
+                    img.thumbnail((400, 400), Image.Resampling.LANCZOS)
+                    img.save(self.profile_photo.path, optimize=True, quality=85)
+        except Exception as e:
+            print(f"Erro ao redimensionar imagem: {e}")
