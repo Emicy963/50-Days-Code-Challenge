@@ -38,3 +38,20 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Perfil de {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        # Deletar foto anterior se existir
+        if self.pk:
+            try:
+                old_profile = UserProfile.objects.get(pk=self.pk)
+                if old_profile.profile_photo and old_profile.profile_photo != self.profile_photo:
+                    if os.path.isfile(old_profile.profile_photo.path):
+                        os.remove(old_profile.profile_photo.path)
+            except UserProfile.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)
+
+        # Redimensionar imagem se necessário
+        if self.profile_photo:
+            self.resize_image()
