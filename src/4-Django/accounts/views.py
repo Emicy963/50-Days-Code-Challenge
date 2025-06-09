@@ -97,17 +97,19 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import authenticate
+from .models import UserProfile
 from .serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
-    PasswordResetSerializer,
+    PasswordResetSerializer, UserCompleteProfileSerializer, ProfileImageUploadSerializer
 )
 import jwt
 
@@ -240,6 +242,78 @@ class RegisterView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UserCompleteProfileView(APIView):
+    """
+    View para visualização e atualização completa do perfil do usuário
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    parser_classes = [MultiPartParser, FormParser]  # Para upload de arquivos
+
+    def get(self, request):
+        """
+        Retorna perfil completo do usuário
+        """
+        serializer = UserCompleteProfileSerializer(
+            request.user, 
+            context={'request': request}
+        )
+        return Response(serializer.data)
+
+    def patch(self, request):
+        """
+        Atualiza dados básicos do usuário
+        """
+        user_data = {}
+        profile_data = {}
+        
+        # Separar dados do User e UserProfile
+        user_fields = ['first_name', 'last_name', 'email']
+        profile_fields = ['bio', 'phone', 'birth_date', 'profile_image']
+        
+        for key, value in request.data.items():
+            if key in user_fields:
+                user_data[key] = value
+            elif key in profile_fields:
+                profile_data[key] = value
+        
+        # Atualizar dados do usuário
+        if user_data:
+            user_serializer = UserCompleteProfileSerializer(
+                request.user, 
+                data=user_data, 
+                partial=True,
+                context={'request': request}
+            )
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Atualizar perfil do usuário
+        if profile_data:
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            profile_serializer = UserProfileSerializer(
+                profile, 
+                data=profile_data, 
+                partial=True,
+                context={'request': request}
+            )
+            if profile_serializer.is_valid():
+                profile_serializer.save()
+            else:
+                return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Retornar dados atualizados
+        updated_serializer = UserCompleteProfileSerializer(
+            request.user, 
+            context={'request': request}
+        )
+        
+        return Response({
+            "message": "Perfil atualizado com sucesso",
+            "user": updated_serializer.data
+        })
 
 class UserProfileView(APIView):
     """
