@@ -449,7 +449,9 @@ def ajax_update_pedido_status(request, id):
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)})
 
+
 # ================ Views adicionais para interação ================
+
 
 @login_required
 @group_required("Administradores", "Gerentes")
@@ -654,6 +656,7 @@ def reports_pedidos(request):
         },
     )
 
+
 @login_required
 @group_required("Administradores", "Gerentes", "Funcionários")
 def pedidos_pdf_report(request):
@@ -836,6 +839,7 @@ def pedidos_pdf_report(request):
     response.write(pdf)
 
     return response
+
 
 @login_required
 @group_required("Administradores", "Gerentes", "Funcionários")

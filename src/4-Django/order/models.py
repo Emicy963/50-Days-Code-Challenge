@@ -4,6 +4,7 @@ from django.urls import reverse
 from clients.models import Client  # Importando o modelo Client
 from decimal import Decimal
 
+
 class Pedido(models.Model):
     STATUS_CHOICES = [
         ("pendente", "Pendente"),

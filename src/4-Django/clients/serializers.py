@@ -156,13 +156,15 @@ class DashboardStatsSerializer(serializers.Serializer):
     pedido_stats = serializers.SerializerMethodField()  # Mudança aqui
     recent_orders = serializers.SerializerMethodField()  # Mudança aqui
     top_clients = ClientListSerializer(many=True)
-    
+
     def get_pedido_stats(self, obj):
         """Import local para evitar circular import"""
         from order.serializers import PedidoStatsSerializer
-        return PedidoStatsSerializer(obj.get('pedido_stats')).data
-    
+
+        return PedidoStatsSerializer(obj.get("pedido_stats")).data
+
     def get_recent_orders(self, obj):
         """Import local para evitar circular import"""
         from order.serializers import PedidoListSerializer
-        return PedidoListSerializer(obj.get('recent_orders'), many=True).data
+
+        return PedidoListSerializer(obj.get("recent_orders"), many=True).data

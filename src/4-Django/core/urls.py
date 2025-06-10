@@ -19,7 +19,7 @@ router.register(r"dashboard", DashboardViewSet, basename="dashboard")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("clients/", include("clients.urls")),
-    path('order/', include('order.urls')),
+    path("order/", include("order.urls")),
     # URLs de autenticação JWT
     path("api/auth/", include("accounts.urls")),
     # URLs da API REST

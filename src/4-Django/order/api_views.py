@@ -8,10 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
 from .models import Pedido
 from .serializers import (
-    PedidoListSerializer, PedidoCreateUpdateSerializer,
-    PedidoDetailSerializer, PedidoStatusUpdateSerializer,
-    PedidoBulkActionSerializer, PedidoStatsSerializer
-    )
+    PedidoListSerializer,
+    PedidoCreateUpdateSerializer,
+    PedidoDetailSerializer,
+    PedidoStatusUpdateSerializer,
+    PedidoBulkActionSerializer,
+    PedidoStatsSerializer,
+)
 from clients.permissions import GroupPermission
 
 
@@ -21,6 +24,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
     max_page_size = 100
+
 
 class PedidoViewSet(viewsets.ModelViewSet):
     """
@@ -265,5 +269,3 @@ class PedidoViewSet(viewsets.ModelViewSet):
 
         serializer = PedidoListSerializer(overdue_pedidos, many=True)
         return Response(serializer.data)
-
-

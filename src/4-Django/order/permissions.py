@@ -34,7 +34,8 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         # Escrita apenas para o dono
         return obj.owner == request.user
-    
+
+
 # Decorator personalizado para verificar grupos
 def group_required(*group_names):
     """

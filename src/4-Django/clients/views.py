@@ -303,6 +303,7 @@ def ajax_get_client_pedidos(request, client_id):
 
     return JsonResponse({"pedidos": pedidos_data, "client_name": client.name})
 
+
 # ==================== VIEWS PARA RELATÓRIOS PDF ====================
 
 
@@ -742,6 +743,7 @@ def export_clients_csv(request):
         )
 
     return response
+
 
 @login_required
 @group_required("Administradores", "Gerentes")

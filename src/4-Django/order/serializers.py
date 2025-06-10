@@ -10,6 +10,7 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = ["id", "name"]
 
+
 class PedidoListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem de pedidos"""
 
@@ -85,10 +86,11 @@ class PedidoDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-    
+
     def get_cliente(self, obj):
         """Import local para evitar circular import"""
         from clients.serializers import ClientListSerializer
+
         return ClientListSerializer(obj.cliente).data
 
 
@@ -220,7 +222,8 @@ class PedidoBulkActionSerializer(serializers.Serializer):
             )
 
         return attrs
-    
+
+
 class PedidoStatsSerializer(serializers.Serializer):
     """Serializer para estatísticas de pedidos"""
 

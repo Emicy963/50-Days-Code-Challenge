@@ -176,6 +176,7 @@ class ClientViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para visualização de usuários
