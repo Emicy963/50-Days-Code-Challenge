@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Group
 from .models import Pedido
-from clients.serializers import ClientListSerializer
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -53,7 +52,7 @@ class PedidoListSerializer(serializers.ModelSerializer):
 class PedidoDetailSerializer(serializers.ModelSerializer):
     """Serializer completo para detalhes do pedido"""
 
-    cliente = ClientListSerializer(read_only=True)
+    cliente = serializers.SerializerMethodField()  # Mudança aqui
     status_display = serializers.ReadOnlyField(source="get_status_display")
     prioridade_display = serializers.ReadOnlyField(source="get_prioridade_display")
     status_display_class = serializers.ReadOnlyField()
@@ -86,6 +85,11 @@ class PedidoDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+    
+    def get_cliente(self, obj):
+        """Import local para evitar circular import"""
+        from clients.serializers import ClientListSerializer
+        return ClientListSerializer(obj.cliente).data
 
 
 class PedidoCreateUpdateSerializer(serializers.ModelSerializer):

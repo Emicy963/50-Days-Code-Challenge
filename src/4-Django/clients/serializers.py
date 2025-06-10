@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User, Group
 from .models import Client
-from order.serializers import PedidoListSerializer, PedidoStatsSerializer
 from decimal import Decimal
 
 
@@ -140,9 +139,6 @@ class ClientCreateUpdateSerializer(serializers.ModelSerializer):
         return value.strip()
 
 
-
-
-
 class ClientStatsSerializer(serializers.Serializer):
     """Serializer para estatísticas de clientes"""
 
@@ -157,6 +153,16 @@ class DashboardStatsSerializer(serializers.Serializer):
     """Serializer para estatísticas do dashboard"""
 
     client_stats = ClientStatsSerializer()
-    pedido_stats = PedidoStatsSerializer()
-    recent_orders = PedidoListSerializer(many=True)
+    pedido_stats = serializers.SerializerMethodField()  # Mudança aqui
+    recent_orders = serializers.SerializerMethodField()  # Mudança aqui
     top_clients = ClientListSerializer(many=True)
+    
+    def get_pedido_stats(self, obj):
+        """Import local para evitar circular import"""
+        from order.serializers import PedidoStatsSerializer
+        return PedidoStatsSerializer(obj.get('pedido_stats')).data
+    
+    def get_recent_orders(self, obj):
+        """Import local para evitar circular import"""
+        from order.serializers import PedidoListSerializer
+        return PedidoListSerializer(obj.get('recent_orders'), many=True).data
