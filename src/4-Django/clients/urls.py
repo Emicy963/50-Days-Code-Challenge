@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from order.views import client_pedidos
+from order.views import client_pedidos, create_pedido_for_client
 
 urlpatterns = [
     path("", views.get_clients, name="clients"),
@@ -11,7 +11,7 @@ urlpatterns = [
     path("bulk-delete/", views.bulk_delete_clients, name="bulk_delete_clients"),
     # URLs de Integração Cliente-Pedidos
     path("clientes/<int:client_id>/pedidos/", client_pedidos, name="client_pedidos"),
-    path("clientes/<int:client_id>/pedidos/criar/", views.create_pedido_for_client, name="create_pedido_for_client"),
+    path("clientes/<int:client_id>/pedidos/criar/", create_pedido_for_client, name="create_pedido_for_client"),
     # URLs para relatórios PDF
     path("cliente/<int:client_id>/pdf/", views.client_pdf_report, name="client_pdf_report"),
     path("dashboard/pdf/", views.dashboard_pdf_report, name="dashboard_pdf_report"),

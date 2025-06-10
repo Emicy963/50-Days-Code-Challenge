@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
-from .models import Client, Pedido
+from .models import Client
+from order.models import Pedido
 from .forms import ClientForm, ClientSearchForm
 from .permissions import group_required
 from reportlab.lib.pagesizes import A4

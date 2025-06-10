@@ -14,7 +14,6 @@ from .serializers import (
     ClientStatsSerializer,
     ClientCreateUpdateSerializer,
     ClientDetailSerializer,
-    PedidoListSerializer,
     UserSerializer,
     GroupSerializer,
     DashboardStatsSerializer,

@@ -3,21 +3,23 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
-from clients import api_views
+from clients.api_views import ClientViewSet, GroupViewSet, UserViewSet, DashboardViewSet
+from order.api_views import PedidoViewSet
 
 # Roteador para a API REST
 router = DefaultRouter()
 
 # Registrando as views da API
-router.register(r"clients", api_views.ClientViewSet)
-router.register(r"pedidos", api_views.PedidoViewSet)
-router.register(r"groups", api_views.GroupViewSet)
-router.register(r"users", api_views.UserViewSet)
-router.register(r"dashboard", api_views.DashboardViewSet, basename="dashboard")
+router.register(r"clients", ClientViewSet)
+router.register(r"pedidos", PedidoViewSet)
+router.register(r"groups", GroupViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"dashboard", DashboardViewSet, basename="dashboard")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("clients/", include("clients.urls")),
+    path('order/', include('order.urls')),
     # URLs de autenticação JWT
     path("api/auth/", include("accounts.urls")),
     # URLs da API REST
