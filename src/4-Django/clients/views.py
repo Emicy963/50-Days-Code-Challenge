@@ -5,23 +5,15 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from datetime import timezone
 from .models import Client, Pedido
-from .forms import (
-    ClientForm,
-    ClientSearchForm,
-    PedidoForm,
-    PedidoSearchForm
-)
+from .forms import ClientForm, ClientSearchForm
 from .permissions import group_required
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER
 from io import BytesIO
 import datetime
 
@@ -749,108 +741,6 @@ def export_clients_csv(request):
         )
 
     return response
-
-
-@login_required
-@group_required("Administradores", "Gerentes", "Funcionários")
-def export_pedidos_csv(request):
-    """
-    Exportar lista de pedidos para CSV com filtros
-    """
-    # Aplicar os mesmos filtros da view get_pedidos
-    search_form = PedidoSearchForm(request.GET)
-    pedidos_list = Pedido.objects.select_related("cliente").order_by("-data_pedido")
-
-    if search_form.is_valid():
-        search_query = search_form.cleaned_data.get("search")
-        cliente = search_form.cleaned_data.get("cliente")
-        status = search_form.cleaned_data.get("status")
-        prioridade = search_form.cleaned_data.get("prioridade")
-        data_inicio = search_form.cleaned_data.get("data_inicio")
-        data_fim = search_form.cleaned_data.get("data_fim")
-        valor_min = search_form.cleaned_data.get("valor_min")
-        valor_max = search_form.cleaned_data.get("valor_max")
-
-        if search_query:
-            pedidos_list = pedidos_list.filter(
-                Q(numero_pedido__icontains=search_query)
-                | Q(cliente__name__icontains=search_query)
-                | Q(descricao__icontains=search_query)
-            )
-
-        if cliente:
-            pedidos_list = pedidos_list.filter(cliente=cliente)
-
-        if status:
-            pedidos_list = pedidos_list.filter(status=status)
-
-        if prioridade:
-            pedidos_list = pedidos_list.filter(prioridade=prioridade)
-
-        if data_inicio:
-            pedidos_list = pedidos_list.filter(data_pedido__date__gte=data_inicio)
-
-        if data_fim:
-            pedidos_list = pedidos_list.filter(data_pedido__date__lte=data_fim)
-
-        if valor_min is not None:
-            pedidos_list = pedidos_list.filter(valor_total__gte=valor_min)
-
-        if valor_max is not None:
-            pedidos_list = pedidos_list.filter(valor_total__lte=valor_max)
-
-    # Criar resposta CSV
-    response = HttpResponse(content_type="text/csv; charset=utf-8")
-    response["Content-Disposition"] = (
-        f'attachment; filename="pedidos_{datetime.date.today()}.csv"'
-    )
-
-    # Adicionar BOM para UTF-8
-    response.write("\ufeff")
-
-    writer = csv.writer(response, delimiter=";")
-
-    # Cabeçalho
-    writer.writerow(
-        [
-            "ID",
-            "Número do Pedido",
-            "Cliente",
-            "Email do Cliente",
-            "Data do Pedido",
-            "Data de Entrega Prevista",
-            "Status",
-            "Prioridade",
-            "Valor Total",
-            "Descrição",
-            "Observações",
-        ]
-    )
-
-    # Dados dos pedidos
-    for pedido in pedidos_list:
-        writer.writerow(
-            [
-                pedido.id,
-                pedido.numero_pedido,
-                pedido.cliente.name,
-                pedido.cliente.email,
-                pedido.data_pedido.strftime("%d/%m/%Y %H:%M"),
-                (
-                    pedido.data_entrega_prevista.strftime("%d/%m/%Y")
-                    if pedido.data_entrega_prevista
-                    else "N/A"
-                ),
-                pedido.get_status_display(),
-                pedido.get_prioridade_display(),
-                f"{pedido.valor_total:.2f}".replace(".", ","),
-                pedido.descricao or "",
-                pedido.observacoes or "",
-            ]
-        )
-
-    return response
-
 
 @login_required
 @group_required("Administradores", "Gerentes")
