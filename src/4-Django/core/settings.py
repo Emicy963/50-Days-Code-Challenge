@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "clients.apps.ClientsConfig",
     "accounts.apps.AccountsConfig",
+    'order.apps.OrderConfig',
 ]
 
 MIDDLEWARE = [

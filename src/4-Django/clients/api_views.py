@@ -7,7 +7,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
 from django.db.models import Count, Sum
 from django.utils import timezone
-from clients.models import Client, Pedido
+from .models import Client
+from order.models import Pedido
 from .serializers import (
     ClientListSerializer,
     ClientStatsSerializer,

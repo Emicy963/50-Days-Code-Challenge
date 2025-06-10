@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from decimal import Decimal
 
 
 class Client(models.Model):
