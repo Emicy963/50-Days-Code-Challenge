@@ -1,7 +1,6 @@
-from datetime import timezone
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Client, Pedido
+from .models import Client
 import re
 
 
