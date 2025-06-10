@@ -1,6 +1,15 @@
 from rest_framework import serializers
+from django.contrib.auth.models import Group
 from .models import Pedido
 from clients.serializers import ClientListSerializer
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """Serializer para grupos de usuários."""
+
+    class Meta:
+        model = Group
+        fields = ["id", "name"]
 
 class PedidoListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem de pedidos"""
